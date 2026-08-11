@@ -1,0 +1,14 @@
+{
+  "name": "gsd-core",
+  "version": "0.1.0",
+  "description": "GSD Core for pi — phase-loop workflow, spec-driven development, and context engineering",
+  "keywords": ["pi-package", "gsd", "workflow", "spec-driven"],
+  "license": "MIT",
+  "pi": {
+    "extensions": ["./extensions"],
+    "skills": ["./skills"]
+  },
+  "pi-subagents": {
+    "agents": ["./agents"]
+  }
+}
