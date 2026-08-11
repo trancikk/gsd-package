@@ -1,9 +1,9 @@
 ---
 name: "gsd-phase-loop"
 description: "Phase-loop workflow (Discuss→Plan→Execute→Verify→Ship) with .planning/ artifacts and GSD-native subagents for pi"
-version: 5
+version: 6
 created: "2026-08-10"
-updated: "2026-08-10"
+updated: "2026-08-11"
 ---
 
 # GSD Phase Loop for pi
@@ -221,7 +221,8 @@ Use read, grep, find, ls, and bash (read-only) to investigate.
 - Deployment mechanism (if any)
 
 Write the map to: .planning/codebase/MAPPING.md`,
-  output: '.planning/codebase/MAPPING.md'
+  output: '.planning/codebase/MAPPING.md',
+  gate: 'test -s .planning/codebase/MAPPING.md'
 });
 ```
 
@@ -268,7 +269,8 @@ Focus on:
 - Existing patterns to follow
 
 Write findings to: .planning/codebase/[area]-DEEP.md`,
-  output: '.planning/codebase/[area]-DEEP.md'
+  output: '.planning/codebase/[area]-DEEP.md',
+  gate: 'test -s .planning/codebase/[area]-DEEP.md'
 });
 ```
 
@@ -415,7 +417,8 @@ const researchResult = await runs.run('research-phase', {
 
 ## Output:
 Write RESEARCH.md to: .planning/phases/<NN>-<slug>/<NN>-RESEARCH.md`,
-  output: `.planning/phases/<NN>-<slug>/<NN>-RESEARCH.md`
+  output: `.planning/phases/<NN>-<slug>/<NN>-RESEARCH.md`,
+  gate: 'test -s .planning/phases/<NN>-<slug>/<NN>-RESEARCH.md'
 });
 ```
 
@@ -461,7 +464,8 @@ Each plan should have:
 - YAML frontmatter (phase, plan, wave, depends_on, requirements, must_haves)
 - XML-structured tasks with read_first, action, verify, acceptance_criteria
 - Wave-based dependency ordering for parallel execution`,
-  output: `.planning/phases/<NN>-<slug>/<NN>-<PP>-PLAN.md`
+  output: `.planning/phases/<NN>-<slug>/<NN>-<PP>-PLAN.md`,
+  gate: 'test -s .planning/phases/<NN>-<slug>/<NN>-<PP>-PLAN.md'
 });
 ```
 
@@ -493,7 +497,8 @@ Check all 9 dimensions:
 7b. Scope reduction detection
 8. CLAUDE.md compliance
 9. Research resolution`,
-  output: `.planning/phases/<NN>-<slug>/<NN>-VALIDATION.md`
+  output: `.planning/phases/<NN>-<slug>/<NN>-VALIDATION.md`,
+  gate: 'test -s .planning/phases/<NN>-<slug>/<NN>-VALIDATION.md'
 });
 ```
 
@@ -526,7 +531,8 @@ const results = await runs.all(
     agent: 'gsd-executor',
     context: 'fresh',
     task: buildExecutorTask(plan),
-    output: `.planning/phases/<NN>-<slug>/<NN>-<PP>-SUMMARY.md`
+    output: `.planning/phases/<NN>-<slug>/<NN>-<PP>-SUMMARY.md`,
+    gate: `test -s .planning/phases/<NN>-<slug>/<NN>-<PP>-SUMMARY.md`
   }))
 );
 ```
@@ -617,7 +623,8 @@ const verifyResult = await runs.run('verify-phase', {
 
 ## Output:
 Write VERIFICATION.md to: .planning/phases/<NN>-<slug>/<NN>-VERIFICATION.md`,
-  output: '.planning/phases/<NN>-<slug>/<NN>-VERIFICATION.md'
+  output: '.planning/phases/<NN>-<slug>/<NN>-VERIFICATION.md',
+  gate: 'test -s .planning/phases/<NN>-<slug>/<NN>-VERIFICATION.md'
 });
 ```
 
@@ -682,6 +689,78 @@ The `gsd-verifier` reads actual code to verify claims, produces VERIFICATION.md 
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## Artifact Integrity — Preventing Empty Artifacts
+
+Subagents sometimes complete successfully but fail to write their artifact file to disk. The `output` parameter is a directive, not a guarantee. Use **three layers of protection**:
+
+### Layer 1: Gate Commands (automatic host-side verification)
+
+Add a `gate` to every `runs.run()` that produces an artifact. The host verifies file existence after completion:
+
+```javascript
+runs.run('research-phase', {
+  agent: 'gsd-phase-researcher',
+  context: 'fresh',
+  task: '...',
+  output: '.planning/phases/07-admin-ux/07-RESEARCH.md',
+  gate: 'test -f .planning/phases/07-admin-ux/07-RESEARCH.md'
+})
+```
+
+**Gate rules:**
+- `gate` is a single shell command run on the host after the subagent completes
+- If the command exits non-zero, the gate fails — the run is marked as not accepted
+- Cannot be combined with `acceptance` — use one or the other
+- For content verification (non-empty file), use: `test -s <path>` (checks file exists AND has size > 0)
+- Rejected on retained resume items
+
+### Layer 2: Acceptance Contracts (self-reported evidence)
+
+When gates aren't sufficient, require evidence of file changes:
+
+```javascript
+runs.run('research-phase', {
+  agent: 'gsd-phase-researcher',
+  context: 'fresh',
+  task: '...',
+  output: '.planning/phases/07-admin-ux/07-RESEARCH.md',
+  acceptance: {
+    level: 'checked',
+    evidence: ['changed-files', 'commands-run']
+  }
+})
+```
+
+### Layer 3: Orchestrator Post-Check (safety net)
+
+After `subagent_wait()`, verify the artifact exists:
+
+```javascript
+// After subagent completes
+const waitResult = await subagent_wait({ id: research.asyncId });
+// Verify artifact exists, reconstruct from agent output if missing
+```
+
+### Which layers to use?
+
+| Phase step | Gate | Acceptance | Post-check |
+|------------|------|------------|------------|
+| Research | ✅ `test -f` | Optional | Recommended |
+| Plan | ✅ `test -f` | Optional | Recommended |
+| Execute | ✅ `test -f` per SUMMARY | `changed-files` | Recommended |
+| Verify | ✅ `test -f` | Optional | Recommended |
+| Onboard map | ✅ `test -f` | — | Recommended |
+| Plan check | ✅ `test -f` | — | Recommended |
+
+### Agent prompt hardening (built-in)
+
+All artifact-producing agents now include a `## CRITICAL: Artifact Writing — MANDATORY` section in their system prompt that instructs them to:
+1. Create the file as first action (placeholder header)
+2. Write complete content as last action
+3. Verify with `ls -la` after writing
+
+This is prevention — gates and post-checks are the safety net.
+
 ## Context Isolation Rules
 
 - **Always `context: 'fresh'`** — every subagent starts clean with only the artifacts in its task
@@ -718,6 +797,8 @@ The GSD agents add: plan-checker, RESEARCH.md structure, PLAN.md format with wav
 3. Subagents complete without context overflow
 4. VERIFICATION.md shows passed or documented gaps
 5. Git commits are atomic per plan task
+6. **No empty artifacts** — every artifact file exists and has content (verified by gates)
+7. **No missing artifacts** — every expected artifact path exists on disk (post-check)
 
 ## Feature status
 
