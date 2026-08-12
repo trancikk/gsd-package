@@ -230,6 +230,36 @@ const results = await runs.all([
 4. No empty files (`test -s` catches zero-byte files)
 5. No missing files (`test -f` catches absent files)
 
+## Common Subagent Invocation Mistakes
+
+### runs.all() vs runs.run() syntax confusion
+
+```javascript
+// ✅ runs.all: array of plain objects, each with `key`
+await runs.all([
+  { key: 'a', agent: 'gsd-executor', context: 'fresh', task: '...' },
+  { key: 'b', agent: 'gsd-executor', context: 'fresh', task: '...' }
+])
+
+// ✅ runs.run: single key string + options object (NO `key` field inside)
+await runs.run('my-run', {
+  agent: 'gsd-executor',
+  context: 'fresh',
+  task: '...'
+})
+
+// ❌ NEVER wrap runs.run() inside runs.all() — causes "runs.all item 0 has an invalid key"
+// ❌ NEVER omit `key` in runs.all() items
+```
+
+### Gate + acceptance mutual exclusivity
+
+`gate` and `acceptance` cannot be combined on the same run item. Use one or the other.
+
+### Template literal escaping in workflowScript
+
+Nested backtick template literals cause "Syntax error in the workflow script". Build task strings with helper functions or string concatenation instead.
+
 ## Pitfalls
 
 - **Gate commands are shell commands** — they run in the project's cwd. Use absolute paths or paths relative to the project root.

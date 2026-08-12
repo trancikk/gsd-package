@@ -537,6 +537,35 @@ const results = await runs.all(
 );
 ```
 
+> **CRITICAL SYNTAX:** `runs.all()` takes an array of run spec objects directly — do NOT wrap them in `runs.run()`. Each object MUST have a `key` field (string, unique within the wave). The `runs.run()` and `runs.all()` syntaxes are different:
+>
+> ```javascript
+> // ✅ CORRECT: runs.all with plain objects + key field
+> await runs.all([
+>   { key: 'exec-1', agent: 'gsd-executor', context: 'fresh', task: '...' },
+>   { key: 'exec-2', agent: 'gsd-executor', context: 'fresh', task: '...' }
+> ])
+>
+> // ✅ CORRECT: runs.run with single object (NO key field)
+> await runs.run('exec-1', {
+>   agent: 'gsd-executor',
+>   context: 'fresh',
+>   task: '...'
+> })
+>
+> // ❌ WRONG: wrapping runs.run() inside runs.all()
+> await runs.all([
+>   runs.run('exec-1', { agent: 'gsd-executor', ... }),  // ERROR!
+>   runs.run('exec-2', { agent: 'gsd-executor', ... })
+> ])
+>
+> // ❌ WRONG: missing key field in runs.all items
+> await runs.all([
+>   { agent: 'gsd-executor', task: '...' },  // ERROR: no key!
+>   { agent: 'gsd-executor', task: '...' }
+> ])
+> ```
+
 ### Executor Task Construction
 
 Each `gsd-executor` task must include:
@@ -781,6 +810,74 @@ If you don't want to use the GSD-specific agents, this skill also works with pi-
 
 The GSD agents add: plan-checker, RESEARCH.md structure, PLAN.md format with waves/must_haves, goal-backward methodology, and VERIFICATION.md with adversarial stance. The builtins are lighter-weight alternatives.
 
+## Common Subagent Invocation Mistakes
+
+### runs.all() vs runs.run() syntax confusion
+
+```javascript
+// ✅ runs.all: array of plain objects, each with `key`
+await runs.all([
+  { key: 'a', agent: 'gsd-executor', context: 'fresh', task: '...' },
+  { key: 'b', agent: 'gsd-executor', context: 'fresh', task: '...' }
+])
+
+// ✅ runs.run: single key string + options object (NO `key` field inside)
+await runs.run('my-run', {
+  agent: 'gsd-executor',
+  context: 'fresh',
+  task: '...'
+})
+
+// ❌ NEVER wrap runs.run() inside runs.all()
+// ❌ NEVER omit `key` in runs.all() items
+```
+
+### Gate + acceptance mutual exclusivity
+
+`gate` and `acceptance` cannot be combined on the same `runs.run()` / `runs.all()` item. Use one or the other:
+
+```javascript
+// ✅ Gate only
+runs.run('key', { agent: '...', task: '...', gate: 'test -s file.md' })
+
+// ✅ Acceptance only
+runs.run('key', { agent: '...', task: '...', acceptance: { level: 'checked', evidence: ['changed-files'] } })
+
+// ❌ NEVER combine them
+runs.run('key', { agent: '...', task: '...', gate: '...', acceptance: {...} })
+```
+
+### Template literal escaping in workflowScript
+
+When building task strings inside `workflowScript`, use backtick template literals carefully. Nested backticks break parsing:
+
+```javascript
+// ✅ Use string concatenation or escape inner backticks
+task: `Execute plan...\n` + planContent + `\n## More:`
+
+// ✅ Build the task string before passing to runs.run()
+const task = buildExecutorTask(plan);  // returns string
+runs.run('key', { agent: 'gsd-executor', task: task })
+
+// ❌ Nested backticks cause "Syntax error in the workflow script"
+runs.run('key', { task: `Plan: ${planContent}` })  // if planContent has backticks
+```
+
+### Output path with gate
+
+The `gate` command runs on the host in the project cwd. Use paths relative to the project root:
+
+```javascript
+// ✅ Relative to project root
+gate: 'test -s .planning/phases/07-admin-ux/07-RESEARCH.md'
+
+// ✅ For dynamic paths, use template literals in the gate string
+gate: `test -s .planning/phases/${phaseSlug}/RESEARCH.md`
+
+// ❌ Absolute paths may fail if the host cwd differs
+gate: 'test -s /home/user/project/.planning/RESEARCH.md'
+```
+
 ## Pitfalls
 
 - **Never skip the Discuss step.** Ambiguous plans produce workers that make wrong assumptions.
@@ -789,6 +886,8 @@ The GSD agents add: plan-checker, RESEARCH.md structure, PLAN.md format with wav
 - **Respect wave dependencies.** Never run dependent plans in parallel.
 - **For trivial work, skip the loop.** Typos and single-file fixes don't need a phase.
 - **Don't over-delegate planning.** Use `gsd-planner` for plan creation; use `gsd-plan-checker` only for validation on complex phases.
+- **Don't wrap `runs.run()` inside `runs.all()`.** They have different syntaxes — see Common Subagent Invocation Mistakes above.
+- **Don't combine `gate` + `acceptance`.** They're mutually exclusive on the same run item.
 
 ## Verification
 
