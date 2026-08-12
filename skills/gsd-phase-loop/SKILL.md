@@ -566,6 +566,24 @@ const results = await runs.all(
 > ])
 > ```
 
+> **⚠️ CRITICAL: Output paths MUST be canonical `.planning/` paths — NEVER use `.pi-subagents/artifacts/outputs/<hash>/` paths.**
+>
+> The `output` parameter controls where the subagent writes its artifact. If you set it to a hash-based path like
+> `.pi-subagents/artifacts/outputs/5cf25566/.planning/phases/...`, the file will be written there instead of the
+> canonical `.planning/` location. Downstream steps (verify, ship) look for artifacts at the canonical path and
+> will fail to find them.
+>
+> ```javascript
+> // ✅ CORRECT: canonical path (relative to project root)
+> output: '.planning/phases/08-web-ui-hardening/08-01-SUMMARY.md'
+>
+> // ❌ WRONG: hash-based artifact path (creates nested duplicate tree)
+> output: '.pi-subagents/artifacts/outputs/5cf25566/.planning/phases/08-web-ui-hardening/08-01-SUMMARY.md'
+> ```
+>
+> **If you do NOT specify `output`**, the runtime auto-generates a hash-based path. This is the most common
+> cause of "missing" summaries. Always explicitly set `output` to the canonical `.planning/` path.
+
 ### Executor Task Construction
 
 Each `gsd-executor` task must include:
@@ -862,6 +880,25 @@ runs.run('key', { agent: 'gsd-executor', task: task })
 // ❌ Nested backticks cause "Syntax error in the workflow script"
 runs.run('key', { task: `Plan: ${planContent}` })  // if planContent has backticks
 ```
+
+### Task text must NOT override the output path
+
+The `output` parameter controls where the subagent writes its artifact. If the task text contains an "Output:" or "Write to:" instruction with a different path, the subagent will follow the task text — writing to the wrong location:
+
+```javascript
+// ❌ WRONG: task text overrides output with hash-based path
+task: `Implement plan...\n\n**Output:**\nWrite your findings to: .pi-subagents/artifacts/outputs/5cf25566/.planning/phases/08-web-ui-hardening/08-01-SUMMARY.md`,
+output: '.planning/phases/08-web-ui-hardening/08-01-SUMMARY.md'  // overridden!
+
+// ✅ CORRECT: task text does NOT mention a specific output path
+// The output parameter controls the path
+task: `Implement plan...\n\nWrite SUMMARY.md when done.`,
+output: '.planning/phases/08-web-ui-hardening/08-01-SUMMARY.md'
+```
+
+**Root cause:** The main agent was generating unique hash-based paths (`.pi-subagents/artifacts/outputs/<hash>/...`) in the task text to avoid conflicts between parallel executors. This caused files to be written to nested duplicate trees instead of the canonical `.planning/` location. Downstream steps (verify, ship) look for artifacts at the canonical path and fail to find them.
+
+**Rule:** Never put path-specific "Output:" or "Write to:" instructions in executor task text. The `output` parameter is the single source of truth.
 
 ### Output path with gate
 
