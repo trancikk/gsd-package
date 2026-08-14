@@ -69,6 +69,29 @@ The onboarding process:
 3. **Generate** — pi derives `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md` from the validated map
 4. **Approve** — you review the proposed milestones/phases before work begins
 
+### Prompt commands
+
+GSD registers pi prompt templates (`/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Use them instead of hand-rolling workflow scripts.
+
+```
+/gsd-onboard C:/Sources/my-project C:/Sources/my-project/.planning/codebase/MAPPING.md
+/gsd-research C:/Sources/my-project C:/Sources/my-project/.planning/phases/01-foo/01-RESEARCH.md
+```
+
+Use forward slashes in paths. See `prompts/` in this package.
+
+### Command tools
+
+For even more reliability, the `gsd-commands` extension registers typed tools the agent can call directly:
+
+- `gsd_onboard({ repoPath, outputPath })`
+- `gsd_research({ repoPath, outputPath, scope? })`
+- `gsd_plan({ repoPath, inputFiles, outputPath })`
+- `gsd_execute({ repoPath, planPath, outputPath })`
+- `gsd_verify({ repoPath, phaseDir, outputPath })`
+
+Each tool validates the inputs, resolves absolute paths, creates the output directory, and returns the exact `subagent({ workflowScript: ... })` call to execute. This removes hand-rolled workflow-script construction entirely.
+
 ## Requirements
 
 - `pi-subagents` — `pi install npm:pi-subagents`

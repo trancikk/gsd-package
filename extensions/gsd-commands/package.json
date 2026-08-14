@@ -1,0 +1,9 @@
+{
+  "name": "gsd-commands",
+  "version": "1.0.0",
+  "description": "GSD Core command tools for pi — deterministic subagent call preparation",
+  "main": "index.ts",
+  "pi": {
+    "extensions": ["./index.ts"]
+  }
+}

@@ -87,6 +87,39 @@ Templates for all artifacts are in the `templates/` directory of this skill.
 
 ## Commands
 
+GSD ships pi prompt templates in `prompts/` and typed tools via the `gsd-commands` extension. Either avoids hand-rolling workflow scripts and supplies the correct `output` + `gate` pattern.
+
+| Command / Tool | Arguments | Purpose |
+|----------------|-----------|---------|
+| `/gsd-onboard` / `gsd_onboard` | `<repo-path> <output-path>` | Produce MAPPING.md for an existing codebase |
+| `/gsd-research` / `gsd_research` | `<repo-path> <output-path> [scope]` | Produce RESEARCH.md for a phase |
+| `/gsd-plan` / `gsd_plan` | `<repo-path> <context-files> <output-path>` | Produce PLAN.md from context/research |
+| `/gsd-execute` / `gsd_execute` | `<repo-path> <plan-path> <output-path>` | Execute a plan, produce SUMMARY.md |
+| `/gsd-verify` / `gsd_verify` | `<repo-path> <phase-dir> <output-path>` | Produce VERIFICATION.md for a phase |
+
+Use forward slashes in paths (e.g., `C:/Sources/my-project/.planning/phases/01-foo/01-RESEARCH.md`).
+
+Prefer the **tools** (`gsd_research`, `gsd_plan`, etc.) when the orchestrator agent is driving the loop — they validate inputs, resolve absolute paths, create output directories, and return the exact subagent call. Prefer the **prompt templates** (`/gsd-research`, etc.) when invoking directly from the editor.
+
+### Path and cwd conventions
+
+**Agent discovery is cwd-relative.** The GSD agents live in the installed GSD package (resolved from the current session cwd). If you change `cwd` to a sibling repo, pi-subagents may fail to find `gsd-phase-researcher`, `gsd-planner`, etc.
+
+Recommended pattern:
+
+1. Keep the orchestrator/session cwd where the GSD package is installed (so agents resolve).
+2. Pass the **absolute path** of the target repo and the absolute output path to the subagent.
+3. Always set `output` to the absolute artifact path and add a `gate` command.
+4. If the artifact lands in `.pi/subagents/artifacts/<hash>/...` instead of the requested path, copy it to the canonical location.
+
+Example for a sibling repo:
+
+```javascript
+subagent({
+  workflowScript: "return runs.run('onboard-map', { agent: 'gsd-phase-researcher', context: 'fresh', task: 'Map this codebase. Write MAPPING.md to C:/Sources/fifa.at.jest/.planning/codebase/MAPPING.md', output: 'C:/Sources/fifa.at.jest/.planning/codebase/MAPPING.md', gate: 'test -s C:/Sources/fifa.at.jest/.planning/codebase/MAPPING.md' });"
+});
+```
+
 Operations beyond the core phase loop:
 
 ### Quick work (no phase needed)
