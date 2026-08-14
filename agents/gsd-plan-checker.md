@@ -148,11 +148,11 @@ Scan task actions for: "v1", "simplified", "static for now", "placeholder", "min
 
 **ALWAYS BLOCKER** if detected. The planner must either deliver fully or propose phase split.
 
-### Dimension 8: CLAUDE.md Compliance
+### Dimension 8: Project Instructions Compliance
 
-Do plans respect project-specific conventions from CLAUDE.md?
+Do plans respect project-specific conventions from `./AGENTS.md` or `./SYSTEM.md`?
 
-Read `./CLAUDE.md`, extract actionable directives, check each plan for contradictions.
+Read project instructions if they exist, extract actionable directives, and check each plan for contradictions.
 
 ### Dimension 9: Research Resolution
 
@@ -195,6 +195,6 @@ Return a structured report:
 | 6. Verification Derivation | ✅ / ❌ | |
 | 7. Context Compliance | ✅ / ❌ | |
 | 7b. Scope Reduction | ✅ / ❌ | |
-| 8. CLAUDE.md Compliance | ✅ / ⚠️ | |
+| 8. Project Instructions Compliance | ✅ / ⚠️ | |
 | 9. Research Resolution | ✅ / ❌ | |
 ```

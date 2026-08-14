@@ -1,12 +1,12 @@
 /**
  * GSD Commands for pi
  *
- * Registers deterministic, parameter-typed tools that prepare the exact
- * `subagent({ workflowScript: ... })` call for each GSD phase agent.
+ * Registers deterministic, parameter-typed tools that prepare and queue the
+ * exact `subagent({ workflowScript: ... })` call for each GSD phase agent.
  *
- * The tools handle path resolution, directory creation, and gate construction
- * so the orchestrator agent does not have to hand-roll workflow scripts or
- * guess cwd/output-path semantics.
+ * The tools handle path resolution, directory creation, and gate construction,
+ * then send the prepared call as a follow-up user message so the subagent
+ * executes automatically without copy-paste.
  */
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
@@ -34,6 +34,13 @@ function ensureOutputDir(outputPath: string): void {
 	fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 }
 
+function buildCrossPlatformGate(outputPath: string): string {
+	const execPath = JSON.stringify(process.execPath.replace(/\\/g, "/"));
+	const targetPath = JSON.stringify(outputPath);
+	const script = `const fs=require('fs'); const p=process.argv[1]; try { const s=fs.statSync(p); process.exit(s.isFile() && s.size>0 ? 0 : 1); } catch (e) { process.exit(1); }`;
+	return `${execPath} -e ${JSON.stringify(script)} ${targetPath}`;
+}
+
 function buildSubagentCall(
 	agent: string,
 	key: string,
@@ -42,28 +49,31 @@ function buildSubagentCall(
 ): string {
 	const taskJson = JSON.stringify(task);
 	const outputJson = JSON.stringify(outputPath);
+	const gate = buildCrossPlatformGate(outputPath);
 	return `subagent({
-  workflowScript: "return runs.run('${key}', { agent: '${agent}', context: 'fresh', task: ${taskJson}, output: ${outputJson}, gate: 'test -s ${outputPath}' });"
+  workflowScript: "return runs.run('${key}', { agent: '${agent}', context: 'fresh', task: ${taskJson}, output: ${outputJson}, gate: '${gate}' });"
 });`;
 }
 
-function prepareToolResult(
+async function queueToolResult(
+	pi: ExtensionAPI,
 	call: string,
 	outputPath: string,
 	repoPath: string,
-): AgentToolResult {
+): Promise<AgentToolResult> {
+	await pi.sendUserMessage(call, { deliverAs: "followUp" });
 	return {
 		content: [
 			{
 				type: "text",
 				text: [
-					`Prepared GSD subagent call.`,
+					`Queued GSD subagent call as a follow-up message; it will execute automatically after this turn completes.`,
 					``,
 					`- Repo: ${repoPath}`,
 					`- Output: ${outputPath}`,
-					`- Gate: test -s ${outputPath}`,
+					`- Gate: ${buildCrossPlatformGate(outputPath)}`,
 					``,
-					`Execute this call exactly to run the subagent:`,
+					`Prepared call:`,
 					``,
 					"```javascript",
 					call,
@@ -91,7 +101,7 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_onboard",
 		label: "GSD Onboard",
-		description: "Prepare gsd-phase-researcher in onboard mode to produce a codebase MAPPING.md.",
+		description: "Queue gsd-phase-researcher in onboard mode to produce a codebase MAPPING.md.",
 		parameters: Type.Object({
 			repoPath: Type.String({ description: "Path to the repo to map (absolute or relative to session cwd)" }),
 			outputPath: Type.String({ description: "Path for MAPPING.md (absolute or relative to session cwd)" }),
@@ -110,14 +120,14 @@ export default function (pi: ExtensionAPI) {
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
 			const call = buildSubagentCall("gsd-phase-researcher", "onboard-map", task, outputPath);
-			return prepareToolResult(call, outputPath, repoPath);
+			return await queueToolResult(pi, call, outputPath, repoPath);
 		},
 	});
 
 	pi.registerTool({
 		name: "gsd_research",
 		label: "GSD Research",
-		description: "Prepare gsd-phase-researcher to produce a phase RESEARCH.md.",
+		description: "Queue gsd-phase-researcher to produce a phase RESEARCH.md.",
 		parameters: Type.Object({
 			repoPath: Type.String({ description: "Path to the repo to research (absolute or relative to session cwd)" }),
 			outputPath: Type.String({ description: "Path for RESEARCH.md (absolute or relative to session cwd)" }),
@@ -138,14 +148,14 @@ export default function (pi: ExtensionAPI) {
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
 			const call = buildSubagentCall("gsd-phase-researcher", "research-phase", task, outputPath);
-			return prepareToolResult(call, outputPath, repoPath);
+			return await queueToolResult(pi, call, outputPath, repoPath);
 		},
 	});
 
 	pi.registerTool({
 		name: "gsd_plan",
 		label: "GSD Plan",
-		description: "Prepare gsd-planner to produce a PLAN.md from context and research.",
+		description: "Queue gsd-planner to produce a PLAN.md from context and research.",
 		parameters: Type.Object({
 			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
 			inputFiles: Type.String({ description: "Comma-separated list of files to read first, or 'auto'" }),
@@ -166,14 +176,14 @@ export default function (pi: ExtensionAPI) {
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
 			const call = buildSubagentCall("gsd-planner", "plan-phase", task, outputPath);
-			return prepareToolResult(call, outputPath, repoPath);
+			return await queueToolResult(pi, call, outputPath, repoPath);
 		},
 	});
 
 	pi.registerTool({
 		name: "gsd_execute",
 		label: "GSD Execute",
-		description: "Prepare gsd-executor to implement a PLAN.md and produce SUMMARY.md.",
+		description: "Queue gsd-executor to implement a PLAN.md and produce SUMMARY.md.",
 		parameters: Type.Object({
 			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
 			planPath: Type.String({ description: "Path to the PLAN.md file (absolute or relative to session cwd)" }),
@@ -194,14 +204,14 @@ export default function (pi: ExtensionAPI) {
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
 			const call = buildSubagentCall("gsd-executor", "execute-plan", task, outputPath);
-			return prepareToolResult(call, outputPath, repoPath);
+			return await queueToolResult(pi, call, outputPath, repoPath);
 		},
 	});
 
 	pi.registerTool({
 		name: "gsd_verify",
 		label: "GSD Verify",
-		description: "Prepare gsd-verifier to produce VERIFICATION.md for a completed phase.",
+		description: "Queue gsd-verifier to produce VERIFICATION.md for a completed phase.",
 		parameters: Type.Object({
 			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
 			phaseDir: Type.String({ description: "Path to the phase directory (absolute or relative to session cwd)" }),
@@ -223,7 +233,7 @@ export default function (pi: ExtensionAPI) {
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
 			const call = buildSubagentCall("gsd-verifier", "verify-phase", task, outputPath);
-			return prepareToolResult(call, outputPath, repoPath);
+			return await queueToolResult(pi, call, outputPath, repoPath);
 		},
 	});
 }

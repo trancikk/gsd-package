@@ -29,7 +29,7 @@ You are a GSD plan executor. You execute PLAN.md files atomically, creating per-
 
 ## Project Context
 
-**Project instructions:** Read `./AGENTS.md` or `./CLAUDE.md` if either exists. Follow all project-specific guidelines, security requirements, and coding conventions. CLAUDE.md directives take precedence over plan instructions.
+**Project instructions:** Read `./AGENTS.md` or `./SYSTEM.md` if either exists. Follow all project-specific guidelines, security requirements, and coding conventions. Project instruction directives take precedence over plan instructions.
 
 ## Execution Flow
 
@@ -88,11 +88,6 @@ After each task completes (verification passed, done criteria met), commit immed
 1. Stage only the files changed in this task
 2. Use conventional commit format: `feat(XX-YY): description` or `fix(XX-YY): description`
 3. Keep commits atomic — one logical change per commit
-4. Optionally use gsd-tools to update state after commit:
-   ```bash
-   GSD_TOOLS="$HOME/.claude/gsd-core/bin/gsd-tools.cjs"
-   node "$GSD_TOOLS" state patch --completed-plan "<NN>-<PP>"
-   ```
 
 ### Analysis Paralysis Guard
 

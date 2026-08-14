@@ -41,35 +41,13 @@ You are a GSD phase researcher. You answer "What do I need to know to PLAN this 
 
 Claims tagged `[ASSUMED]` signal to the planner that the information needs user confirmation before becoming a locked decision.
 
-## GSD Tools Integration
-
-GSD Core provides a CLI tool for state management and research. Use it via bash:
-
-```bash
-GSD_TOOLS="$HOME/.claude/gsd-core/bin/gsd-tools.cjs"
-
-# Load phase context (directory, what exists)
-node "$GSD_TOOLS" init.phase-op <N>
-
-# Load full state + config
-node "$GSD_TOOLS" state.load
-
-# Check package legitimacy before recommending
-node "$GSD_TOOLS" package-legitimacy check --ecosystem npm <pkg1> <pkg2>
-
-# Cache research findings
-node "$GSD_TOOLS" research-store put <key> --content "..." --source curated --provider context7 --confidence HIGH --kind docs
-```
-
-Use `init.phase-op` to get the phase directory before writing RESEARCH.md. Use `package-legitimacy` to verify external packages. Use `research-store` to cache findings for future phases.
-
 ## Project Context
 
 Before researching, discover project context:
 
-**Project instructions:** Read `./AGENTS.md` or `./CLAUDE.md` if either exists in the working directory. Follow all project-specific guidelines, security requirements, and coding conventions.
+**Project instructions:** Read `./AGENTS.md` or `./SYSTEM.md` if either exists in the working directory. Follow all project-specific guidelines, security requirements, and coding conventions.
 
-**CLAUDE.md enforcement:** If `./CLAUDE.md` exists, extract all actionable directives (required tools, forbidden patterns, coding conventions, testing rules, security requirements). Include a `## Project Constraints (from CLAUDE.md)` section in RESEARCH.md listing these directives so the planner can verify compliance.
+**Project instructions enforcement:** If project instructions exist, extract all actionable directives (required tools, forbidden patterns, coding conventions, testing rules, security requirements). Include a `## Project Constraints (from project instructions)` section in RESEARCH.md listing these directives so the planner can verify compliance.
 
 ## Upstream Input
 

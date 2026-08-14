@@ -90,7 +90,7 @@ For even more reliability, the `gsd-commands` extension registers typed tools th
 - `gsd_execute({ repoPath, planPath, outputPath })`
 - `gsd_verify({ repoPath, phaseDir, outputPath })`
 
-Each tool validates the inputs, resolves absolute paths, creates the output directory, and returns the exact `subagent({ workflowScript: ... })` call to execute. This removes hand-rolled workflow-script construction entirely.
+Each tool validates the inputs, resolves absolute paths, creates the output directory, and queues the exact `subagent({ workflowScript: ... })` call as a follow-up message. The subagent then executes automatically after the current turn completes, removing hand-rolled workflow-script construction and copy-paste.
 
 ## Requirements
 
@@ -236,7 +236,7 @@ Lifecycle scenes:
 | Agents | `agents/*.md` | `~/.pi/agent/agents/gsd-*.md` |
 | Hooks | `hooks/*.js` (Claude Code hooks API) | `extensions/gsd-hooks/index.ts` (pi events) |
 | State | `.planning/` + `STATE.md` | Same |
-| CLI tools | `gsd-tools.cjs` (Node CLI) | Available via `~/.claude/gsd-core/` (optional) |
+| CLI tools | `gsd-tools.cjs` (Node CLI) | `gsd-commands` extension / prompt templates (pi tools) |
 | Multi-runtime | Claude Code, Codex, Cursor, etc. | pi only |
 | Wave execution | Parallel via Claude Code subagents | Parallel via `runs.all` |
 

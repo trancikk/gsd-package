@@ -23,11 +23,6 @@ Read:
 - `.planning/PROJECT.md` — project overview
 - Prior phase CONTEXT.md files (up to 3 back) for accumulated decisions
 
-```bash
-GSD_TOOLS="$HOME/.claude/gsd-core/bin/gsd-tools.cjs"
-node "$GSD_TOOLS" roadmap.get-phase <N> --raw
-```
-
 ### 2. Identify Gray Areas
 
 Analyze the phase to find ambiguous decisions — areas where the planner would otherwise have to guess. Gray areas fall into categories:

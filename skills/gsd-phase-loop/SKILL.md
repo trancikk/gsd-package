@@ -336,11 +336,7 @@ After onboarding, proceed to Step 1 (Discuss Phase) for the first phase.
 
 Analyze the phase to find ambiguous decisions where the planner would otherwise guess:
 
-```bash
-GSD_TOOLS="$HOME/.claude/gsd-core/bin/gsd-tools.cjs"
-node "$GSD_TOOLS" roadmap.get-phase <N> --raw
-```
-
+Read `.planning/ROADMAP.md` for phase goal, requirements, and success criteria.
 Read prior phase CONTEXT.md files (up to 3 back) for accumulated decisions.
 
 Identify gray areas in these categories:
@@ -528,7 +524,7 @@ Check all 9 dimensions:
 6. Verification derivation
 7. Context compliance
 7b. Scope reduction detection
-8. CLAUDE.md compliance
+8. Project instructions compliance
 9. Research resolution`,
   output: `.planning/phases/<NN>-<slug>/<NN>-VALIDATION.md`,
   gate: 'test -s .planning/phases/<NN>-<slug>/<NN>-VALIDATION.md'

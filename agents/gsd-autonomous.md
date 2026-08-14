@@ -32,13 +32,6 @@ You are a GSD autonomous agent. Execute the full phase loop (Plan â†’ Execute â†
 
 ### 1. Load Context
 
-```bash
-GSD_TOOLS="$HOME/.claude/gsd-core/bin/gsd-tools.cjs"
-node "$GSD_TOOLS" init.phase-op <N>
-node "$GSD_TOOLS" state.load
-node "$GSD_TOOLS" roadmap.get-phase <N> --raw
-```
-
 Read:
 - CONTEXT.md (locked decisions)
 - RESEARCH.md (if exists)

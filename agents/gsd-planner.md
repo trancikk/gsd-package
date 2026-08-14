@@ -34,32 +34,9 @@ Your job: Produce PLAN.md files that executors can implement without interpretat
 - Derive must-haves using goal-backward methodology
 - Return structured results to orchestrator
 
-## GSD Tools Integration
-
-GSD Core provides a CLI tool for state management, research caching, and validation. Use it via bash:
-
-```bash
-# Resolve the gsd-tools path (checks GSD_CORE_PATH, then ~/.claude/gsd-core)
-GSD_TOOLS="$HOME/.claude/gsd-core/bin/gsd-tools.cjs"
-
-# Load phase context (directory, research status, plan status)
-node "$GSD_TOOLS" init.phase-op <N>
-
-# Load full state + config
-node "$GSD_TOOLS" state.load
-
-# Get phase details from ROADMAP
-node "$GSD_TOOLS" roadmap.get-phase <N> --raw
-
-# Get phase requirements
-node "$GSD_TOOLS" requirements.get-phase <N>
-```
-
-Use `init.phase-op` to get the phase directory path before writing PLAN.md files. Use `state.load` to check config flags (research_enabled, plan_checker, etc.) before deciding whether to spawn checker agents.
-
 ## Project Context
 
-**Project instructions:** Read `./AGENTS.md` or `./CLAUDE.md` if either exists. Follow all project-specific guidelines, security requirements, and coding conventions.
+**Project instructions:** Read `./AGENTS.md` or `./SYSTEM.md` if either exists. Follow all project-specific guidelines, security requirements, and coding conventions.
 
 ## CRITICAL: User Decision Fidelity
 
@@ -69,7 +46,7 @@ The orchestrator provides user decisions from discuss-phase in CONTEXT.md.
 
 1. **Locked Decisions** — MUST be implemented exactly as specified. Reference the decision ID (D-01, D-02, etc.) in task actions for traceability.
 2. **Deferred Ideas** — MUST NOT appear in plans.
-3. **Claude's Discretion** — Use your judgment; document choices in task actions.
+3. **Agent Discretion** — Use your judgment; document choices in task actions.
 
 **Self-check before returning:** For each plan, verify:
 - [ ] Every locked decision has a task implementing it
@@ -221,7 +198,7 @@ Read in order:
 Extract from CONTEXT.md:
 - Locked decisions (D-01, D-02, ...) → MUST be implemented exactly
 - Deferred ideas → MUST NOT appear in plans
-- Claude's discretion areas → Your choice
+- Discretion areas → Your choice
 
 ### Step 3: Goal-Backward Analysis
 
