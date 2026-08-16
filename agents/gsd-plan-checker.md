@@ -76,19 +76,22 @@ Does every phase requirement have task(s) addressing it?
 
 ### Dimension 2: Task Completeness
 
-Does every task have Files + Action + Verify + Done?
+Does every task have Files + Action + Verify + Acceptance criteria?
 
-Required by task type:
-| Type | Files | Action | Verify | Done |
-|------|-------|--------|--------|------|
-| `auto` | Required | Required | Required | Required |
-| `tdd` | Required | Behavior + Implementation | Test commands | Expected outcomes |
+Required fields for an `auto` task:
+| Field | Template key | Required? |
+|-------|--------------|-----------|
+| Type | `**Type:**` | Defaults to `auto` |
+| Files | `**Files:**` (fallback `**Read first:**`) | Required |
+| Action | `**Action:**` | Required |
+| Verify | `**Verify:**` | Required |
+| Acceptance criteria | `**Acceptance criteria:**` | Required |
 
 Red flags:
-- Missing `<verify>` — can't confirm completion
-- Missing `<done>` — no acceptance criteria
-- Vague `<action>` — "implement auth" instead of specific steps
-- Empty `<files>` — what gets created?
+- Missing `**Verify:**` — can't confirm completion
+- Missing `**Acceptance criteria:**` — no acceptance criteria
+- Vague `**Action:**` — "implement auth" instead of specific steps
+- Empty `**Files:**` / `**Read first:**` — what gets created?
 
 ### Dimension 3: Dependency Correctness
 
@@ -130,23 +133,18 @@ Do must_haves trace back to phase goal?
 - Good: "User can log in", "Session persists"
 - Bad: "JWT library installed", "Prisma schema updated"
 
-### Dimension 7: Context Compliance
+### Dimension 7: Context Compliance & Scope Reduction Detection
 
-Do plans honor user decisions from discuss-phase?
+Do plans honor user decisions from discuss-phase, and did the planner silently simplify them?
 
 1. Parse CONTEXT.md: Locked Decisions, Deferred Ideas, Discretion areas
 2. Extract all numbered decisions (D-01, D-02, etc.)
 3. For each locked Decision, find implementing task(s)
 4. Verify 100% decision coverage
 5. Verify no tasks implement Deferred Ideas
+6. Scan task actions for scope-reduction language: "v1", "simplified", "static for now", "placeholder", "minimal", "will be wired later", "skip for now"
 
-### Dimension 7b: Scope Reduction Detection
-
-Did the planner silently simplify user decisions?
-
-Scan task actions for: "v1", "simplified", "static for now", "placeholder", "minimal", "will be wired later", "skip for now".
-
-**ALWAYS BLOCKER** if detected. The planner must either deliver fully or propose phase split.
+**ALWAYS BLOCKER** if scope reduction is detected. The planner must either deliver fully or propose a phase split.
 
 ### Dimension 8: Project Instructions Compliance
 
@@ -193,8 +191,7 @@ Return a structured report:
 | 4. Key Links Planned | ✅ / ❌ | |
 | 5. Scope Sanity | ✅ / ⚠️ | |
 | 6. Verification Derivation | ✅ / ❌ | |
-| 7. Context Compliance | ✅ / ❌ | |
-| 7b. Scope Reduction | ✅ / ❌ | |
+| 7. Context Compliance & Scope Reduction | ✅ / ❌ | |
 | 8. Project Instructions Compliance | ✅ / ⚠️ | |
 | 9. Research Resolution | ✅ / ❌ | |
 ```

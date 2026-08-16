@@ -53,8 +53,26 @@ This skill uses GSD-native agents registered at `~/.pi/agent/agents/gsd-*.md`. E
 ├── gsd-planner.md
 ├── gsd-executor.md
 ├── gsd-verifier.md
-└── gsd-plan-checker.md
+├── gsd-plan-checker.md
+├── gsd-discuss.md
+├── gsd-quick.md
+├── gsd-debug.md
+├── gsd-autonomous.md
+├── gsd-milestone-complete.md
+├── gsd-milestone-summary.md
+├── gsd-pause.md
+├── gsd-resume.md
+├── gsd-code-review.md
+├── gsd-security-audit.md
+├── gsd-retrospective.md
+├── gsd-ui-researcher.md
+├── gsd-ui-checker.md
+├── gsd-ui-auditor.md
+├── gsd-capture.md
+└── gsd-learnings.md
 ```
+
+The table above lists the five core loop agents; the full set includes quick work, milestone management, session management, quality/review, knowledge capture, and UI agents listed under *Operations beyond the core phase loop* below.
 
 ---
 
@@ -66,15 +84,24 @@ This skill uses GSD-native agents registered at `~/.pi/agent/agents/gsd-*.md`. E
 ├── ROADMAP.md                          # Milestone + phase listing
 ├── REQUIREMENTS.md                     # Numbered acceptance criteria (REQ-IDs)
 ├── STATE.md                            # Living position tracker (read this FIRST)
+├── MILESTONES.md                       # Archived milestone summaries
+├── LEARNINGS.md                        # Cross-phase learnings
 ├── config.json                         # Workflow configuration
 ├── codebase/                           # Codebase maps (onboarding output)
 │   ├── MAPPING.md                      # Full codebase map
 │   └── [area]-DEEP.md                  # Optional deep dives
+├── debug/                              # Debug session files
+│   └── <slug>.md
+├── todos/                              # Pending / deferred todos
+│   └── pending/
+│       └── <slug>.md
 └── phases/
     └── <NN>-<slug>/                    # One directory per phase
         ├── <NN>-CONTEXT.md             # Implementation decisions (discuss)
         ├── <NN>-RESEARCH.md            # Research findings (plan)
-        ├── <NN>-VALIDATION.md          # Test coverage strategy (plan)
+        ├── <NN>-VALIDATION.md          # Plan validation report (optional)
+        ├── <NN>-UI-SPEC.md             # UI design contract (optional)
+        ├── <NN>-RETROSPECTIVE.md       # Post-phase retrospective (optional)
         ├── <NN>-<PP>-PLAN.md           # Executable plan (one per plan)
         ├── <NN>-<PP>-SUMMARY.md        # Execution record (one per plan)
         ├── <NN>-VERIFICATION.md        # Verification report (verify)
@@ -120,7 +147,7 @@ subagent({
 });
 ```
 
-Operations beyond the core phase loop:
+Operations beyond the core phase loop are invoked by spawning the corresponding agent directly with `subagent({ workflowScript: ... })`. There are no prompt templates for these agents in `prompts/`.
 
 ### Quick work (no phase needed)
 
@@ -789,6 +816,10 @@ runs.run('research-phase', {
 - Cannot be combined with `acceptance` — use one or the other
 - For content verification (non-empty file), use: `test -s <path>` (checks file exists AND has size > 0)
 - Rejected on retained resume items
+- **Cross-platform:** Unix `test -s`/`test -f` do not work on Windows hosts. For portable gates use Node, e.g.:
+  ```javascript
+  gate: 'node -e "const fs=require(\'fs\'); const p=process.argv[1]; try { const s=fs.statSync(p); process.exit(s.isFile() && s.size>0 ? 0 : 1); } catch (e) { process.exit(1); }" "<path>"'
+  ```
 
 ### Layer 2: Acceptance Contracts (self-reported evidence)
 

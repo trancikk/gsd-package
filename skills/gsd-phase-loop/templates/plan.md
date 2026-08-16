@@ -36,6 +36,8 @@ estimate:
 ## Tasks
 
 ### Task 1: [Task Name]
+- **Type:** auto
+- **Files:** `[file:line]`, `[file:line]` — files to read before acting (fallback: use **Read first**)
 - **Read first:** `[file:line]` — [what to look for]
 - **Action:** [What to implement/change]
 - **Verify:** [How to confirm it works — test command, manual check]
@@ -44,6 +46,8 @@ estimate:
   - [Criterion 2]
 
 ### Task 2: [Task Name]
+- **Type:** auto
+- **Files:** `[file:line]` — files to read before acting (fallback: use **Read first**)
 - **Read first:** `[file:line]` — [what to look for]
 - **Action:** [What to implement/change]
 - **Verify:** [How to confirm it works]

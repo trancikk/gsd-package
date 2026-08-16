@@ -97,18 +97,14 @@ For each artifact: "What must be CONNECTED for this to function?"
 
 ## Task Anatomy
 
-Every task has required fields:
+Every task has required fields (matching `templates/plan.md`):
 
-- **<files>:** Exact file paths created or modified.
-- **<action>:** Specific implementation instructions, including what to avoid and WHY. NEVER place fenced code blocks inside `<action>`.
-- **<verify>:** How to prove the task is complete. Every `<verify>` MUST include an `<automated>` command.
-- **<done>:** Acceptance criteria — measurable state of completion.
-
-## TDD Detection
-
-Can you write `expect(fn(input)).toBe(output)` before writing `fn`?
-- Yes → Create a dedicated TDD plan (type: tdd)
-- No → Standard task in standard plan
+- **Type:** `auto` for normal implementation tasks, or `checkpoint:human-verify` when the executor must stop for human verification.
+- **Files:** Exact file paths to read before acting.
+- **Read first:** What to look for in those files (human-readable guidance).
+- **Action:** Specific implementation instructions, including what to avoid and WHY. NEVER place fenced code blocks inside Action — describe the change in prose.
+- **Verify:** How to prove the task is complete. Include an automated command where possible.
+- **Acceptance criteria:** Measurable state of completion.
 
 ## Output: PLAN.md Structure
 
@@ -116,69 +112,68 @@ Can you write `expect(fn(input)).toBe(output)` before writing `fn`?
 
 ```markdown
 ---
-phase: <NN>-<slug>
+phase: <NN>
 plan: <PP>
-type: execute
-wave: <N>
+wave: 1
 depends_on: []
-files_modified: []
-requirements: []
+files:
+  - path/to/file1.ts
+  - path/to/file2.ts
+requirements:
+  - REQ-01
 must_haves:
-  truths: []
-  artifacts: []
-  key_links: []
+  truths:
+    - "[Verifiable truth about the code]"
+  artifacts:
+    - "[File or export that must exist]"
+  key_links:
+    - "[Connection that must work]"
+estimate:
+  tokens: 50000
+  tasks: 4
+  confidence: low
 ---
 
-<objective>
-[What this plan accomplishes]
+# Plan <NN>-<PP>: [Plan Title]
 
-Purpose: [Why this matters]
-Output: [Artifacts created]
-</objective>
+## Objective
+[What this plan achieves in one sentence]
 
-<context>
-@.planning/PROJECT.md
-@.planning/ROADMAP.md
-@.planning/STATE.md
-@.planning/phases/<NN>-<slug>/<NN>-CONTEXT.md
-@.planning/phases/<NN>-<slug>/<NN>-RESEARCH.md
-</context>
+## Context
+<!-- Read these files before starting -->
+- `.planning/PROJECT.md` — project overview
+- `.planning/STATE.md` — current position
+- `.planning/phases/<NN>-<slug>/<NN>-CONTEXT.md` — phase decisions
+- `.planning/phases/<NN>-<slug>/<NN>-RESEARCH.md` — research findings (if available)
 
-<tasks>
+## Tasks
 
-<task type="auto">
-  <name>Task 1: [Action-oriented name]</name>
-  <files>path/to/file.ext</files>
-  <action>[Specific implementation]</action>
-  <verify>
-    <automated>pytest tests/test_module.py::test_behavior -x</automated>
-  </verify>
-  <done>[Acceptance criteria]</done>
-</task>
+### Task 1: [Action-oriented name]
+- **Type:** auto
+- **Files:** `path/to/file.ext`
+- **Read first:** `[file:line]` — [what to look for]
+- **Action:** [Specific implementation instructions, including what to avoid and WHY]
+- **Verify:** [Automated command or manual check]
+- **Acceptance criteria:**
+  - [Criterion 1]
+  - [Criterion 2]
 
-</tasks>
-
-<verification>
-[Overall phase checks]
-</verification>
-
-<success_criteria>
-[Measurable completion]
-</success_criteria>
+## Integration Points
+[Where this plan's output connects to other plans — interfaces, shared types, call sites]
 ```
 
 ## Frontmatter Fields
 
 | Field | Required | Purpose |
 |-------|----------|---------|
-| `phase` | Yes | Phase identifier |
-| `plan` | Yes | Plan number within phase |
-| `type` | Yes | `execute` or `tdd` |
+| `phase` | Yes | Phase identifier (number only, e.g. `01`) |
+| `plan` | Yes | Plan number within phase (e.g. `01`) |
 | `wave` | Yes | Execution wave number |
 | `depends_on` | Yes | Plan IDs this plan requires |
-| `files_modified` | Yes | Files this plan touches |
+| `files` | Yes | Files this plan touches |
 | `requirements` | Yes | **MUST** list requirement IDs from ROADMAP. Every requirement ID MUST appear in at least one plan. |
 | `must_haves` | Yes | Goal-backward verification criteria |
+| `estimate` | No | Token/task estimate and confidence |
 
 Wave numbers are pre-computed during planning. Plans with no `depends_on` → Wave 1. Plans depending on Wave 1 → Wave 2.
 

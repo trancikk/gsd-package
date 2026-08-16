@@ -46,18 +46,20 @@ For each task in order:
 
 0. **Precondition check:** If the task has a precondition, verify it first with read-only checks. If unmet, STOP and report.
 
-1. **If `type="auto"`:**
-   - Read the files listed in `<files>` first to understand current state
-   - Execute the `<action>` — make minimal, correct edits
-   - Run the `<verify>` command
-   - Confirm `<done>` criteria met
+1. **Determine task type.** Look for `**Type:**` in the task. Default to `auto` if absent.
+
+2. **If `type="auto"`:**
+   - Read the files listed in `**Files:**` first (fallback to `**Read first:**` if Files is absent)
+   - Execute the `**Action:**` — make minimal, correct edits
+   - Run the `**Verify:**` command
+   - Confirm `**Acceptance criteria:**` are met
    - Commit immediately (see commit protocol)
 
-2. **If `type="checkpoint:human-verify"`:**
+3. **If `type="checkpoint:human-verify"`:**
    - STOP immediately — return structured checkpoint message
    - A fresh agent will be spawned to continue
 
-3. **After all tasks:** run overall verification, confirm success criteria
+4. **After all tasks:** run overall verification, confirm success criteria
 
 ### Deviation Rules
 
