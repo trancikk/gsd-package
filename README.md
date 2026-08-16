@@ -90,7 +90,7 @@ For even more reliability, the `gsd-commands` extension registers typed tools th
 - `gsd_execute({ repoPath, planPath, outputPath })`
 - `gsd_verify({ repoPath, phaseDir, outputPath })`
 
-Each tool validates the inputs, resolves absolute paths, creates the output directory, and queues the exact `subagent({ workflowScript: ... })` call as a follow-up message. The subagent then executes automatically after the current turn completes, removing hand-rolled workflow-script construction and copy-paste.
+Each tool validates the inputs, resolves absolute paths, creates the output directory, and returns the exact `subagent({ workflowScript: ... })` call. The orchestrator agent then invokes it directly and waits for completion, removing hand-rolled workflow-script construction and copy-paste.
 
 ## Requirements
 
