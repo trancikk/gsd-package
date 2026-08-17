@@ -84,6 +84,8 @@ The table above lists the five core loop agents; the full set includes quick wor
 ├── ROADMAP.md                          # Milestone + phase listing
 ├── REQUIREMENTS.md                     # Numbered acceptance criteria (REQ-IDs)
 ├── STATE.md                            # Living position tracker (read this FIRST)
+├── BACKLOG.md                          # Pending ideas, todos, tech debt
+├── CONVENTIONS.md                      # GSD workflow conventions for this project
 ├── MILESTONES.md                       # Archived milestone summaries
 ├── LEARNINGS.md                        # Cross-phase learnings
 ├── config.json                         # Workflow configuration
@@ -176,6 +178,7 @@ Operations beyond the core phase loop are invoked by spawning the corresponding 
 |---------|-------|-------------|
 | `code-review` | `gsd-code-review` | Review implementation against plan + requirements |
 | `security-audit` | `gsd-security-audit` | OWASP ASVS scan + threat model |
+| `backlog` | `gsd-backlog` | Interactive backlog triage |
 | `retrospective` | `gsd-retrospective` | Post-phase what went well / what didn't |
 | `ui-research` | `gsd-ui-researcher` | Produce UI-SPEC.md design contract (interactive) |
 | `ui-check` | `gsd-ui-checker` | Validate UI-SPEC.md against 6 dimensions |

@@ -99,7 +99,10 @@ Each tool validates the inputs, resolves absolute paths, creates the output dire
 - `gsd_state_advance({ repoPath, operation, phase, plan?, phaseName?, nextAction? })` — phase/plan lifecycle transitions (`begin-phase`, `complete-plan`, `complete-phase`)
 - `gsd_state_progress({ repoPath })` — recalculate `progress.*` from `.planning/phases/`
 
-These run directly in the extension (not in a subagent), atomically rewrite `STATE.md`, and return JSON. They eliminate the formatting drift and missed-updates that come from asking agents to `write` the whole file.
+**Backlog tool** (host-side file operations on `.planning/BACKLOG.md`):
+- `gsd_backlog({ repoPath, operation, ... })` — list / add / update / close / promote backlog items
+
+These run directly in the extension (not in a subagent), atomically rewrite the target file, and return JSON. They eliminate the formatting drift and missed-updates that come from asking agents to `write` the whole file.
 
 ## Requirements
 
@@ -117,6 +120,7 @@ These run directly in the extension (not in a subagent), atomically rewrite `STA
 ├── REQUIREMENTS.md                     # Numbered acceptance criteria (REQ-IDs)
 ├── CONVENTIONS.md                      # GSD workflow conventions for this project
 ├── STATE.md                            # Living position tracker (read this FIRST)
+├── BACKLOG.md                          # Pending ideas, todos, tech debt
 ├── config.json                         # Workflow configuration
 └── phases/
     └── <NN>-<slug>/                    # One directory per phase
@@ -304,6 +308,7 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | Security audit | `gsd-security-audit` agent — OWASP ASVS + threat model |
 | Autonomous execution | `gsd-autonomous` agent — full loop without human intervention |
 | Capture | `gsd-capture` agent — ideas, todos, decisions from conversation |
+| Backlog management | `gsd_backlog` tool + `gsd-backlog` agent — triage and promote items |
 | Learnings | `gsd-learnings` agent — cross-phase learning accumulation |
 | Retrospective | `gsd-retrospective` agent — post-phase what went well / what didn't |
 | UI research | `gsd-ui-researcher` agent — interactive UI-SPEC.md design contract |
@@ -339,7 +344,6 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | **Phase removal** | `gsd-tools phase remove` | Remove a phase cleanly |
 | **Roadmap editing** | `gsd-tools roadmap` | Add/remove/edit roadmap entries |
 | **Quick tasks** | `gsd-tools quick-tasks` | Quick task tracking |
-| **Backlog** | `gsd-tools backlog` | Backlog management |
 | **Eval** | `gsd-tools eval` | Evaluation/assessment tools |
 | **Spec phase** | `/gsd-spec-phase` | Pre-planning spec with edge-completeness and prohibition probes |
 | **Secure phase** | `/gsd-secure-phase` | Security-focused phase planning |

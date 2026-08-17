@@ -45,12 +45,15 @@ sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
     "${TEMPLATES_DIR}/conventions.md" > .planning/CONVENTIONS.md
 
+# Create BACKLOG.md from template
+cp "${TEMPLATES_DIR}/backlog.md" .planning/BACKLOG.md
+
 # Create config.json
 cp "${TEMPLATES_DIR}/config.json" .planning/config.json
 
 echo ""
 echo "✓ .planning/ directory created"
-echo "✓ PROJECT.md, ROADMAP.md, REQUIREMENTS.md, STATE.md, CONVENTIONS.md, config.json initialized"
+echo "✓ PROJECT.md, ROADMAP.md, REQUIREMENTS.md, STATE.md, CONVENTIONS.md, BACKLOG.md, config.json initialized"
 echo ""
 echo "Next steps:"
 echo "  1. Edit .planning/PROJECT.md with your project details"
@@ -58,4 +61,5 @@ echo "  2. Edit .planning/REQUIREMENTS.md with numbered REQ-IDs"
 echo "  3. Edit .planning/ROADMAP.md with milestones and phases"
 echo "  4. Review and customize .planning/CONVENTIONS.md for this team"
 echo "  5. Edit .planning/STATE.md to set the first phase as active"
-echo "  6. Start the phase loop with: discuss-phase for Phase 1"
+echo "  6. Use .planning/BACKLOG.md to capture deferred ideas and todo items"
+echo "  7. Start the phase loop with: discuss-phase for Phase 1"

@@ -19,6 +19,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
 import { resolveAbsolutePath, ensureOutputDir, buildCrossPlatformGate } from "./utils";
 import { registerStateTools } from "./state";
+import { registerBacklogTools } from "./backlog";
 
 interface ResolvedPaths {
 	repoPath: string;
@@ -220,4 +221,5 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	registerStateTools(pi);
+	registerBacklogTools(pi);
 }
