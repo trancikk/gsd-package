@@ -1,0 +1,280 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { Type } from "typebox";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { AgentToolResult } from "@earendil-works/pi-agent-core";
+import { resolveAbsolutePath, writeAtomic } from "./utils";
+import { parseFrontmatter, stringifyFrontmatter } from "./yaml";
+
+function statePath(repoPath: string): string {
+	return path.join(repoPath, ".planning/STATE.md");
+}
+
+function loadState(repoPath: string) {
+	const sp = statePath(repoPath);
+	const content = fs.readFileSync(sp, "utf8");
+	return { ...parseFrontmatter(content), sp };
+}
+
+function saveState(repoPath: string, frontmatter: Record<string, any>, body: string): void {
+	const sp = statePath(repoPath);
+	frontmatter.last_updated = new Date().toISOString();
+	writeAtomic(sp, stringifyFrontmatter(frontmatter) + body);
+}
+
+function getByPath(obj: Record<string, any>, pathStr: string): any {
+	return pathStr.split(".").reduce((o, key) => (o == null ? undefined : o[key]), obj);
+}
+
+function setByPath(obj: Record<string, any>, pathStr: string, value: any): void {
+	const keys = pathStr.split(".");
+	const last = keys.pop()!;
+	let target: Record<string, any> = obj;
+	for (const key of keys) {
+		if (target[key] == null || typeof target[key] !== "object" || Array.isArray(target[key])) {
+			target[key] = {};
+		}
+		target = target[key];
+	}
+	target[last] = value;
+}
+
+function formatDate(): string {
+	return new Date().toISOString().slice(0, 10);
+}
+
+function padPhase(num: number | string): string {
+	const n = String(num).padStart(2, "0");
+	return n;
+}
+
+function listPhaseDirs(phasesDir: string): Array<{ num: string; dir: string; path: string }> {
+	if (!fs.existsSync(phasesDir)) return [];
+	return fs
+		.readdirSync(phasesDir, { withFileTypes: true })
+		.filter((d) => d.isDirectory() && /^\d{2}-/.test(d.name))
+		.map((d) => ({ num: d.name.slice(0, 2), dir: d.name, path: path.join(phasesDir, d.name) }))
+		.sort((a, b) => a.num.localeCompare(b.num));
+}
+
+function countPlans(phasePath: string): { total: number; completed: number } {
+	if (!fs.existsSync(phasePath)) return { total: 0, completed: 0 };
+	const files = fs.readdirSync(phasePath, { withFileTypes: true });
+	const plans = files.filter((f) => f.isFile() && /^\d{2}-\d{2}-PLAN\.md$/.test(f.name));
+	const summaries = files.filter((f) => f.isFile() && /^\d{2}-\d{2}-SUMMARY\.md$/.test(f.name));
+	return { total: plans.length, completed: summaries.length };
+}
+
+function buildToolResultText(payload: any): AgentToolResult {
+	return {
+		content: [
+			{
+				type: "text",
+				text: JSON.stringify(payload, null, 2),
+			},
+		],
+	};
+}
+
+export function registerStateTools(pi: ExtensionAPI) {
+	pi.registerTool({
+		name: "gsd_state_load",
+		label: "GSD State Load",
+		description: "Load .planning/STATE.md frontmatter and markdown body.",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+		}),
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
+			const { frontmatter, body, sp } = loadState(repoPath);
+			return buildToolResultText({ ok: true, path: sp, frontmatter, body });
+		},
+	});
+
+	pi.registerTool({
+		name: "gsd_state_update",
+		label: "GSD State Update",
+		description:
+			"Atomically update a single field in .planning/STATE.md frontmatter using dot-notation path (e.g. 'progress.completed_plans').",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+			field: Type.String({
+				description: "Dot-notation path, e.g. 'active_phase' or 'progress.completed_plans'",
+			}),
+			value: Type.Union([Type.String(), Type.Number(), Type.Boolean(), Type.Null()], {
+				description: "New scalar value",
+			}),
+		}),
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
+			const { frontmatter, body } = loadState(repoPath);
+			const previous = getByPath(frontmatter, params.field);
+			setByPath(frontmatter, params.field, params.value);
+			frontmatter.last_activity = formatDate();
+			saveState(repoPath, frontmatter, body);
+			return buildToolResultText({
+				ok: true,
+				path: statePath(repoPath),
+				field: params.field,
+				previous,
+				value: params.value,
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "gsd_state_advance",
+		label: "GSD State Advance",
+		description:
+			"Perform a common state transition: begin a phase, complete a plan, or complete a phase.",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+			operation: Type.Union(
+				[
+					Type.Literal("begin-phase", {
+						description: "Start a phase: set active_phase, current_phase, status, next_action",
+					}),
+					Type.Literal("complete-plan", {
+						description: "Mark a plan completed and update current_plan",
+					}),
+					Type.Literal("complete-phase", {
+						description: "Mark a phase complete, clear active state, advance to next phase",
+					}),
+				],
+				{ description: "State transition to apply" },
+			),
+			phase: Type.Union([Type.String(), Type.Number()], {
+				description: "Phase number or padded string (e.g. '01' or 1)",
+			}),
+			plan: Type.Optional(
+				Type.Union([Type.String(), Type.Number()], {
+					description: "Plan number within the phase (required for complete-plan)",
+				}),
+			),
+			phaseName: Type.Optional(
+				Type.String({
+					description: "Human-readable phase name (used by begin-phase)",
+				}),
+			),
+			nextAction: Type.Optional(
+				Type.String({
+					description: "Override the next_action value (defaults are sensible)",
+				}),
+			),
+		}),
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
+			const { frontmatter, body } = loadState(repoPath);
+			const phase = padPhase(params.phase);
+			const phaseSlug = params.phaseName || `Phase ${phase}`;
+
+			if (params.operation === "begin-phase") {
+				frontmatter.active_phase = phase;
+				frontmatter.current_phase = phase;
+				frontmatter.current_phase_name = phaseSlug;
+				frontmatter.current_plan = null;
+				frontmatter.status = "active";
+				frontmatter.next_action = params.nextAction || "discuss-phase";
+				frontmatter.stopped_at = `Phase ${phase} started`;
+			} else if (params.operation === "complete-plan") {
+				if (params.plan == null) {
+					throw new Error("complete-plan requires a plan number");
+				}
+				const planNum = padPhase(params.plan);
+				frontmatter.current_plan = `${phase}-${planNum}`;
+				frontmatter.status = "executing";
+				frontmatter.stopped_at = `Plan ${phase}-${planNum} completed`;
+			} else if (params.operation === "complete-phase") {
+				const completed = Array.isArray(frontmatter.completed_phases)
+					? frontmatter.completed_phases
+					: [];
+				if (!completed.includes(phase)) {
+					completed.push(phase);
+				}
+				frontmatter.completed_phases = completed.sort();
+				frontmatter.active_phase = null;
+				frontmatter.current_phase = null;
+				frontmatter.current_phase_name = null;
+				frontmatter.current_plan = null;
+				frontmatter.status = "idle";
+				// Advance next phase if queued
+				const nextPhases = Array.isArray(frontmatter.next_phases) ? frontmatter.next_phases : [];
+				const next = nextPhases.find((p) => padPhase(p) !== phase);
+				frontmatter.next_action = params.nextAction || (next ? `begin-phase ${padPhase(next)}` : "milestone-complete");
+				frontmatter.stopped_at = `Phase ${phase} completed`;
+			}
+
+			frontmatter.last_activity = formatDate();
+			saveState(repoPath, frontmatter, body);
+			return buildToolResultText({
+				ok: true,
+				path: statePath(repoPath),
+				operation: params.operation,
+				phase,
+				plan: params.plan != null ? padPhase(params.plan) : undefined,
+				frontmatter: {
+					active_phase: frontmatter.active_phase,
+					current_phase: frontmatter.current_phase,
+					current_phase_name: frontmatter.current_phase_name,
+					current_plan: frontmatter.current_plan,
+					status: frontmatter.status,
+					next_action: frontmatter.next_action,
+					completed_phases: frontmatter.completed_phases,
+				},
+			});
+		},
+	});
+
+	pi.registerTool({
+		name: "gsd_state_progress",
+		label: "GSD State Progress",
+		description:
+			"Recalculate progress.* fields in .planning/STATE.md by scanning .planning/phases/ for plans and summaries.",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+		}),
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
+			const { frontmatter, body } = loadState(repoPath);
+			const phasesDir = path.join(repoPath, ".planning/phases");
+			const phaseDirs = listPhaseDirs(phasesDir);
+
+			let totalPlans = 0;
+			let completedPlans = 0;
+			let completedPhases = 0;
+
+			for (const phase of phaseDirs) {
+				const counts = countPlans(phase.path);
+				totalPlans += counts.total;
+				completedPlans += counts.completed;
+				const hasVerification = fs.existsSync(path.join(phase.path, `${phase.dir}-VERIFICATION.md`));
+				if (hasVerification) completedPhases++;
+			}
+
+			const progress = {
+				total_phases: phaseDirs.length,
+				completed_phases: completedPhases,
+				total_plans: totalPlans,
+				completed_plans: completedPlans,
+				percent: totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0,
+			};
+
+			frontmatter.progress = progress;
+			frontmatter.last_activity = formatDate();
+			saveState(repoPath, frontmatter, body);
+			return buildToolResultText({
+				ok: true,
+				path: statePath(repoPath),
+				progress,
+			});
+		},
+	});
+}

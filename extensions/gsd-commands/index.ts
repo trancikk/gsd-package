@@ -1,44 +1,39 @@
 /**
  * GSD Commands for pi
  *
- * Registers deterministic, parameter-typed tools that prepare the exact
- * `subagent({ workflowScript: ... })` call for each GSD phase agent.
+ * Registers deterministic, parameter-typed tools for GSD workflows.
  *
- * The tools handle path resolution, directory creation, and gate construction,
- * then return the prepared call so the orchestrator can execute it directly
- * and wait for the subagent to complete.
+ * Two families of tools live here:
+ *
+ * 1. **Orchestration tools** (`gsd_onboard`, `gsd_research`, `gsd_plan`,
+ *    `gsd_execute`, `gsd_verify`) — prepare the exact `subagent()` call for
+ *    each GSD phase agent. They do not mutate files.
+ *
+ * 2. **State-management tools** (`gsd_state_load`, `gsd_state_update`,
+ *    `gsd_state_advance`, `gsd_state_progress`) — host-side file operations
+ *    on `.planning/STATE.md`. They run directly in the extension and return
+ *    JSON, avoiding the need for agents to drive a CLI.
  */
+import { Type } from "typebox";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import { Type } from "typebox";
-import * as fs from "node:fs";
-import * as path from "node:path";
+import { resolveAbsolutePath, ensureOutputDir, buildCrossPlatformGate } from "./utils";
+import { registerStateTools } from "./state";
 
 interface ResolvedPaths {
 	repoPath: string;
 	outputPath: string;
 }
 
-function toForwardSlash(input: string): string {
-	return input.replace(/\\/g, "/");
-}
-
-function resolveAbsolutePath(input: string, cwd: string): string {
-	const normalized = toForwardSlash(input);
-	return path.isAbsolute(normalized)
-		? normalized
-		: toForwardSlash(path.resolve(cwd, normalized));
-}
-
-function ensureOutputDir(outputPath: string): void {
-	fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-}
-
-function buildCrossPlatformGate(outputPath: string): string {
-	const execPath = JSON.stringify(process.execPath.replace(/\\/g, "/"));
-	const targetPath = JSON.stringify(outputPath);
-	const script = `const fs=require('fs'); const p=process.argv[1]; try { const s=fs.statSync(p); process.exit(s.isFile() && s.size>0 ? 0 : 1); } catch (e) { process.exit(1); }`;
-	return `${execPath} -e ${JSON.stringify(script)} ${targetPath}`;
+function resolveAndEnsure(
+	repoPathInput: string,
+	outputPathInput: string,
+	ctx: ExtensionContext,
+): ResolvedPaths {
+	const repoPath = resolveAbsolutePath(repoPathInput, ctx.cwd);
+	const outputPath = resolveAbsolutePath(outputPathInput, ctx.cwd);
+	ensureOutputDir(outputPath);
+	return { repoPath, outputPath };
 }
 
 function buildSubagentCall(
@@ -82,17 +77,6 @@ function buildToolResult(
 			},
 		],
 	};
-}
-
-function resolveAndEnsure(
-	repoPathInput: string,
-	outputPathInput: string,
-	ctx: ExtensionContext,
-): ResolvedPaths {
-	const repoPath = resolveAbsolutePath(repoPathInput, ctx.cwd);
-	const outputPath = resolveAbsolutePath(outputPathInput, ctx.cwd);
-	ensureOutputDir(outputPath);
-	return { repoPath, outputPath };
 }
 
 export default function (pi: ExtensionAPI) {
@@ -234,4 +218,6 @@ export default function (pi: ExtensionAPI) {
 			return buildToolResult(call, outputPath, repoPath);
 		},
 	});
+
+	registerStateTools(pi);
 }

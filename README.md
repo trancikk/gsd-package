@@ -84,6 +84,7 @@ Use forward slashes in paths. See `prompts/` in this package.
 
 For even more reliability, the `gsd-commands` extension registers typed tools the agent can call directly:
 
+**Orchestration tools** (return a prepared `subagent()` call):
 - `gsd_onboard({ repoPath, outputPath })`
 - `gsd_research({ repoPath, outputPath, scope? })`
 - `gsd_plan({ repoPath, inputFiles, outputPath })`
@@ -91,6 +92,14 @@ For even more reliability, the `gsd-commands` extension registers typed tools th
 - `gsd_verify({ repoPath, phaseDir, outputPath })`
 
 Each tool validates the inputs, resolves absolute paths, creates the output directory, and returns the exact `subagent({ workflowScript: ... })` call. The orchestrator agent then invokes it directly and waits for completion, removing hand-rolled workflow-script construction and copy-paste.
+
+**State-management tools** (host-side file operations on `.planning/STATE.md`):
+- `gsd_state_load({ repoPath })` — returns parsed frontmatter + body
+- `gsd_state_update({ repoPath, field, value })` — atomic dot-notation frontmatter update
+- `gsd_state_advance({ repoPath, operation, phase, plan?, phaseName?, nextAction? })` — phase/plan lifecycle transitions (`begin-phase`, `complete-plan`, `complete-phase`)
+- `gsd_state_progress({ repoPath })` — recalculate `progress.*` from `.planning/phases/`
+
+These run directly in the extension (not in a subagent), atomically rewrite `STATE.md`, and return JSON. They eliminate the formatting drift and missed-updates that come from asking agents to `write` the whole file.
 
 ## Requirements
 

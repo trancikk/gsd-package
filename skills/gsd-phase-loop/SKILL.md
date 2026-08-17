@@ -792,6 +792,17 @@ The `gsd-verifier` reads actual code to verify claims, produces VERIFICATION.md 
 │  STATE.md is read at the start of every step and written    │
 │  after every significant action.                            │
 └─────────────────────────────────────────────────────────────┘
+
+## State-management tools
+
+The `gsd-commands` extension provides host-side tools for reading and mutating `STATE.md` without asking a subagent to rewrite the whole file:
+
+- `gsd_state_load({ repoPath })` — read frontmatter and body
+- `gsd_state_update({ repoPath, field, value })` — atomic dot-notation frontmatter update
+- `gsd_state_advance({ repoPath, operation, phase, ... })` — `begin-phase`, `complete-plan`, `complete-phase`
+- `gsd_state_progress({ repoPath })` — recalculate `progress.*` from disk
+
+Use these in the orchestrator layer for reliable state transitions. Agents reading `STATE.md` still use the `read` tool; agents updating it should prefer these tools over `write` to avoid formatting drift.
 ```
 
 ## Artifact Integrity — Preventing Empty Artifacts
