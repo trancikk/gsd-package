@@ -26,12 +26,35 @@ export function buildCrossPlatformGate(outputPath: string): string {
 /**
  * Atomically write a file by writing to a temp file and renaming it into place.
  * Prevents half-written files if the process crashes mid-write.
+ *
+ * On Windows, rename over an existing file can fail with EPERM if the target is
+ * briefly locked. In that case we fall back to copy-then-unlink, then direct
+ * write as a last resort, so the update still lands.
  */
 export function writeAtomic(filePath: string, content: string): void {
 	const dir = path.dirname(filePath);
 	const tmpPath = path.join(dir, `.tmp-${path.basename(filePath)}-${Date.now()}`);
 	fs.writeFileSync(tmpPath, content, "utf8");
-	fs.renameSync(tmpPath, filePath);
+	try {
+		fs.renameSync(tmpPath, filePath);
+	} catch (err: any) {
+		if (err.code === "EPERM" || err.code === "EBUSY") {
+			try {
+				fs.copyFileSync(tmpPath, filePath);
+				fs.unlinkSync(tmpPath);
+				return;
+			} catch (copyErr: any) {
+				fs.writeFileSync(filePath, content, "utf8");
+				try {
+					fs.unlinkSync(tmpPath);
+				} catch {
+					// ignore cleanup failure
+				}
+				return;
+			}
+		}
+		throw err;
+	}
 }
 
 /**
