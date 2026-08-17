@@ -55,8 +55,8 @@ bash ~/.pi/agent/skills/gsd-phase-loop/init.sh
 # 2. Review the generated .planning/codebase/MAPPING.md
 #    Validate: overview, architecture, tech debt — fix anything wrong.
 
-# 3. pi generates PROJECT.md, ROADMAP.md, REQUIREMENTS.md from the map.
-#    Review and adjust the proposed milestones/phases.
+# 3. pi generates PROJECT.md, ROADMAP.md, REQUIREMENTS.md, and CONVENTIONS.md from the map.
+#    Review and adjust the proposed milestones/phases and project conventions.
 
 # 4. Start the phase loop
 #    In pi: "run phase 1"
@@ -66,8 +66,8 @@ The onboarding process:
 
 1. **Map** — `gsd-phase-researcher` analyzes the codebase (stack, architecture, conventions, entry points, tech debt) and writes `.planning/codebase/MAPPING.md`
 2. **Validate** — you review the map, correct inaccuracies, state your priorities
-3. **Generate** — pi derives `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md` from the validated map
-4. **Approve** — you review the proposed milestones/phases before work begins
+3. **Generate** — pi derives `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, and `CONVENTIONS.md` from the validated map
+4. **Approve** — you review the proposed milestones/phases and conventions before work begins
 
 ### Prompt commands
 
@@ -106,6 +106,7 @@ Each tool validates the inputs, resolves absolute paths, creates the output dire
 ├── PROJECT.md                          # Project identity and core value
 ├── ROADMAP.md                          # Milestone + phase listing with goals
 ├── REQUIREMENTS.md                     # Numbered acceptance criteria (REQ-IDs)
+├── CONVENTIONS.md                      # GSD workflow conventions for this project
 ├── STATE.md                            # Living position tracker (read this FIRST)
 ├── config.json                         # Workflow configuration
 └── phases/

@@ -146,11 +146,18 @@ Do plans honor user decisions from discuss-phase, and did the planner silently s
 
 **ALWAYS BLOCKER** if scope reduction is detected. The planner must either deliver fully or propose a phase split.
 
-### Dimension 8: Project Instructions Compliance
+### Dimension 8: Project Instructions & Conventions Compliance
 
-Do plans respect project-specific conventions from `./AGENTS.md` or `./SYSTEM.md`?
+Do plans respect project-specific conventions from `./AGENTS.md`, `./SYSTEM.md`, or `.planning/CONVENTIONS.md`?
 
-Read project instructions if they exist, extract actionable directives, and check each plan for contradictions.
+Read project instructions and `.planning/CONVENTIONS.md` if they exist. Extract actionable directives (coding conventions, artifact naming, plan structure, commit convention, workflow rules) and check each plan for contradictions.
+
+Specifically verify:
+- Plan file naming follows `<NN>-<PP>-PLAN.md`
+- Frontmatter includes required fields: `phase`, `plan`, `wave`, `depends_on`, `files`, `requirements`, `must_haves`
+- Commit messages fit the configured convention
+- Task structure matches the expected XML format
+- No use of non-GSD terminology (e.g., "epic", "sprint", "story") unless the project has explicitly adopted it
 
 ### Dimension 9: Research Resolution
 

@@ -61,10 +61,11 @@ Then verify each level against the actual codebase.
 ### Step 1: Load Context
 
 Read:
-1. `.planning/ROADMAP.md` — phase goal and success criteria
-2. `.planning/phases/<NN>-<slug>/<NN>-CONTEXT.md` — decisions that should have been followed
-3. All `.planning/phases/<NN>-<slug>/<NN>-*-PLAN.md` files — must_haves to verify
-4. All `.planning/phases/<NN>-<slug>/<NN>-*-SUMMARY.md` files — what executors claim
+1. `.planning/CONVENTIONS.md` — GSD workflow conventions for this project (if exists)
+2. `.planning/ROADMAP.md` — phase goal and success criteria
+3. `.planning/phases/<NN>-<slug>/<NN>-CONTEXT.md` — decisions that should have been followed
+4. All `.planning/phases/<NN>-<slug>/<NN>-*-PLAN.md` files — must_haves to verify
+5. All `.planning/phases/<NN>-<slug>/<NN>-*-SUMMARY.md` files — what executors claim
 
 ### Step 2: Establish Must-Haves
 

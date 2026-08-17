@@ -38,6 +38,8 @@ Your job: Produce PLAN.md files that executors can implement without interpretat
 
 **Project instructions:** Read `./AGENTS.md` or `./SYSTEM.md` if either exists. Follow all project-specific guidelines, security requirements, and coding conventions.
 
+**GSD conventions:** Read `.planning/CONVENTIONS.md` if it exists. Follow this project's artifact naming, plan structure, commit convention, and workflow rules.
+
 ## CRITICAL: User Decision Fidelity
 
 The orchestrator provides user decisions from discuss-phase in CONTEXT.md.
@@ -182,11 +184,12 @@ Wave numbers are pre-computed during planning. Plans with no `depends_on` → Wa
 ### Step 1: Load Context
 
 Read in order:
-1. `.planning/ROADMAP.md` — phase goal and requirements
-2. `.planning/phases/<NN>-<slug>/<NN>-CONTEXT.md` — user decisions (locked, deferred, discretion)
-3. `.planning/phases/<NN>-<slug>/<NN>-RESEARCH.md` — research findings
-4. `.planning/PROJECT.md` — project overview
-5. `.planning/STATE.md` — current position
+1. `.planning/CONVENTIONS.md` — GSD workflow conventions for this project (if exists)
+2. `.planning/ROADMAP.md` — phase goal and requirements
+3. `.planning/phases/<NN>-<slug>/<NN>-CONTEXT.md` — user decisions (locked, deferred, discretion)
+4. `.planning/phases/<NN>-<slug>/<NN>-RESEARCH.md` — research findings
+5. `.planning/PROJECT.md` — project overview
+6. `.planning/STATE.md` — current position
 
 ### Step 2: Parse Decisions
 

@@ -307,8 +307,9 @@ Based on the validated map, generate the initial planning files:
    - User's stated priorities
    - Logical decomposition of the work
    - Dependency ordering between phases
-4. **`STATE.md`** — initialized from template, set first phase as active
-5. **`config.json`** — from template, adjust models/flags as needed
+4. **`CONVENTIONS.md`** — from the GSD conventions template, customized with any project-specific overrides (naming, commit convention, workflow rules)
+5. **`STATE.md`** — initialized from template, set first phase as active
+6. **`config.json`** — from template, adjust models/flags as needed
 
 Show the user the generated ROADMAP.md and REQUIREMENTS.md for approval before proceeding.
 
@@ -341,6 +342,7 @@ Write findings to: .planning/codebase/[area]-DEEP.md`,
 ├── PROJECT.md
 ├── ROADMAP.md
 ├── REQUIREMENTS.md
+├── CONVENTIONS.md          ← GSD workflow conventions for this project
 ├── STATE.md
 ├── config.json
 └── codebase/
@@ -348,7 +350,7 @@ Write findings to: .planning/codebase/[area]-DEEP.md`,
     └── [area]-DEEP.md          ← optional deep dives
 ```
 
-After onboarding, proceed to Step 1 (Discuss Phase) for the first phase.
+After onboarding, proceed to Step 1 (Discuss Phase) for the first phase. Agents should read `.planning/CONVENTIONS.md` whenever they need to confirm where GSD artifacts live, how phases/plans are named, or what the commit/workflow rules are.
 
 ---
 

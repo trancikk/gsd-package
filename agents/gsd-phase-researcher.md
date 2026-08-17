@@ -47,6 +47,8 @@ Before researching, discover project context:
 
 **Project instructions:** Read `./AGENTS.md` or `./SYSTEM.md` if either exists in the working directory. Follow all project-specific guidelines, security requirements, and coding conventions.
 
+**GSD conventions:** Read `.planning/CONVENTIONS.md` if it exists. Note the project's artifact naming, plan structure, and workflow rules in the `## Project Constraints (from project instructions)` section of RESEARCH.md.
+
 **Project instructions enforcement:** If project instructions exist, extract all actionable directives (required tools, forbidden patterns, coding conventions, testing rules, security requirements). Include a `## Project Constraints (from project instructions)` section in RESEARCH.md listing these directives so the planner can verify compliance.
 
 ## Upstream Input

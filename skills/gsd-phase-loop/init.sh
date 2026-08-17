@@ -11,6 +11,10 @@ PROJECT_NAME="${1:-$(basename "$(pwd)")}"
 TIMESTAMP="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
 DATE="$(date +%Y-%m-%d)"
 
+# Resolve template directory relative to this script so it works regardless of cwd
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEMPLATES_DIR="${SCRIPT_DIR}/templates"
+
 echo "Initializing GSD Phase Loop for: ${PROJECT_NAME}"
 
 # Create directory structure
@@ -19,33 +23,39 @@ mkdir -p ".planning/phases"
 # Create PROJECT.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    templates/project.md > .planning/PROJECT.md
+    "${TEMPLATES_DIR}/project.md" > .planning/PROJECT.md
 
 # Create ROADMAP.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    templates/roadmap.md > .planning/ROADMAP.md
+    "${TEMPLATES_DIR}/roadmap.md" > .planning/ROADMAP.md
 
 # Create REQUIREMENTS.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    templates/requirements.md > .planning/REQUIREMENTS.md
+    "${TEMPLATES_DIR}/requirements.md" > .planning/REQUIREMENTS.md
 
 # Create STATE.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    templates/state.md > .planning/STATE.md
+    "${TEMPLATES_DIR}/state.md" > .planning/STATE.md
+
+# Create CONVENTIONS.md from template
+sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
+    -e "s/<DATE>/${DATE}/g" \
+    "${TEMPLATES_DIR}/conventions.md" > .planning/CONVENTIONS.md
 
 # Create config.json
-cp templates/config.json .planning/config.json
+cp "${TEMPLATES_DIR}/config.json" .planning/config.json
 
 echo ""
 echo "✓ .planning/ directory created"
-echo "✓ PROJECT.md, ROADMAP.md, REQUIREMENTS.md, STATE.md, config.json initialized"
+echo "✓ PROJECT.md, ROADMAP.md, REQUIREMENTS.md, STATE.md, CONVENTIONS.md, config.json initialized"
 echo ""
 echo "Next steps:"
 echo "  1. Edit .planning/PROJECT.md with your project details"
 echo "  2. Edit .planning/REQUIREMENTS.md with numbered REQ-IDs"
 echo "  3. Edit .planning/ROADMAP.md with milestones and phases"
-echo "  4. Edit .planning/STATE.md to set the first phase as active"
-echo "  5. Start the phase loop with: discuss-phase for Phase 1"
+echo "  4. Review and customize .planning/CONVENTIONS.md for this team"
+echo "  5. Edit .planning/STATE.md to set the first phase as active"
+echo "  6. Start the phase loop with: discuss-phase for Phase 1"
