@@ -12,7 +12,7 @@ A spec-driven development workflow adapted from GSD Core for pi's native subagen
 
 **Requires:** `pi-subagents` extension (install via `pi install npm:pi-subagents`). GSD agents are registered at `~/.pi/agent/agents/gsd-*.md`.
 
-**Optional:** `gsd-hooks` extension at `~/.pi/agent/extensions/gsd-hooks/` provides context monitoring, phase boundary detection, and commit validation (pi-native equivalent of GSD Core's hook system).
+**Optional:** `gsd-hooks` extension at `~/.pi/agent/extensions/gsd-hooks/` provides context monitoring, phase boundary detection, commit validation, prompt guard, read-injection scanner, and workflow guard (pi-native equivalent of GSD Core's hook system). Read-before-edit guarding is provided by the `pi-lens` package.
 
 ## When to Use
 
@@ -1078,7 +1078,7 @@ gate: 'test -s /home/user/project/.planning/RESEARCH.md'
 
 ### ✅ Available now
 
-Phase loop (Discuss→Plan→Execute→Verify→Ship), interactive discuss with locked decisions, wave-based parallelism, fresh-context subagents, quick tasks, structured debugging, milestone completion/summary, pause/resume, codebase onboarding, context monitoring, phase boundary reminders, commit validation, status display, code review, security audit, retrospective, capture, learnings, autonomous execution, UI research, UI checking, UI audit.
+Phase loop (Discuss→Plan→Execute→Verify→Ship), interactive discuss with locked decisions, wave-based parallelism, fresh-context subagents, quick tasks, structured debugging, milestone completion/summary, pause/resume, codebase onboarding, context monitoring, phase boundary reminders, commit validation, status display, prompt guard, read-injection scanner, workflow guard, code review, security audit, retrospective, capture, learnings, autonomous execution, UI research, UI checking, UI audit.
 
 ### ❌ Not yet available
 

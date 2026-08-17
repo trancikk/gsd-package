@@ -7,9 +7,12 @@
  * 3. Commit validation — enforces Conventional Commits format
  * 4. Commit reminder — detects uncommitted changes after phase work and reminds to commit
  * 5. Status display — shows GSD state in pi's footer
+ * 6. Prompt guard — scans .planning/ writes for injected instructions
+ * 7. Read-injection scanner — scans read tool output for injected instructions
+ * 8. Workflow guard — warns about edits inconsistent with STATE.md next_action
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { isToolCallEventType, isBashToolResult } from "@earendil-works/pi-coding-agent";
+import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
 import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { execSync } from "node:child_process";
@@ -19,10 +22,25 @@ import { execSync } from "node:child_process";
 const WARNING_THRESHOLD = 35;  // remaining percentage
 const CRITICAL_THRESHOLD = 25;
 
+const INJECTION_PATTERNS = [
+	/ignore\s+(all\s+)?(previous|prior|earlier)\s+(instructions?|commands?|prompts?)/i,
+	/disregard\s+(your\s+)?(system\s+prompt|instructions?|training)/i,
+	/you\s+(are\s+now|should\s+act\s+as|must\s+pretend)/i,
+	/new\s+(system\s+)?prompt\s*[:\-]/i,
+	/override\s+(previous|prior)\s+(instructions?|constraints?)/i,
+	/system\s*:\s*ignore/i,
+	/ignore\s+above\s+instructions?/i,
+	/\{\{\s*system\s+prompt\s*\}\}/i,
+	/<!--\s*.*?(?:ignore|system|prompt|instructions?).*?-->/i,
+];
+
+const SUSPICIOUS_MARKDOWN_PATTERNS = [
+	/\[\]\(.*?(?:instruction|prompt|ignore).*?\)/i, // links with instruction-like text
+];
+
 // ── State ───────────────────────────────────────────────────────────────────
 
 let gsdActive = false;
-let gsdState: GsdState | null = null;
 let lastContextWarning = "";
 
 interface GsdState {
@@ -36,6 +54,60 @@ interface GsdState {
   phaseNum: string | null;
   phaseTotal: string | null;
   phaseName: string | null;
+}
+
+// ── Guards ──────────────────────────────────────────────────────────────────
+
+function scanForInjection(text: string): string | null {
+	if (!text) return null;
+	for (const pattern of INJECTION_PATTERNS) {
+		const match = text.match(pattern);
+		if (match) return match[0];
+	}
+	for (const pattern of SUSPICIOUS_MARKDOWN_PATTERNS) {
+		const match = text.match(pattern);
+		if (match) return match[0];
+	}
+	return null;
+}
+
+function isPlanningPath(filePath: string): boolean {
+	return filePath.includes(".planning/") || filePath.startsWith(".planning/");
+}
+
+function isStateFile(filePath: string): boolean {
+	return filePath.endsWith("STATE.md");
+}
+
+function isSummaryOrVerification(filePath: string): boolean {
+	return /\d{2}-VERIFICATION\.md$/.test(filePath) || /\d{2}-\d{2}-SUMMARY\.md$/.test(filePath);
+}
+
+function extractTextContent(toolName: string, input: any): string | null {
+	if (!input) return null;
+	if (toolName === "write") {
+		return input.content || null;
+	}
+	if (toolName === "edit") {
+		// edit tool may have multiple replacements; concatenate newText
+		const edits = input.edits;
+		if (Array.isArray(edits)) {
+			return edits.map((e: any) => e.newText || "").join("\n");
+		}
+		return null;
+	}
+	return null;
+}
+
+function extractReadOutput(content: any[]): string | null {
+	if (!Array.isArray(content)) return null;
+	const parts: string[] = [];
+	for (const item of content) {
+		if (item && item.type === "text" && typeof item.text === "string") {
+			parts.push(item.text);
+		}
+	}
+	return parts.length > 0 ? parts.join("\n") : null;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -120,12 +192,143 @@ function formatStatus(state: GsdState): string {
   return parts.join(" · ");
 }
 
-function renderProgressBar(percent: number): string {
-  const filled = Math.floor(percent / 10);
-  return "[" + "█".repeat(filled) + "░".repeat(10 - filled) + `] ${percent}%`;
+// ── Extension ───────────────────────────────────────────────────────────────
+
+function handlePhaseBoundary(event: any, ctx: any) {
+  if (!gsdActive) return;
+
+  const toolName = event.toolName;
+  let filePath: string | null = null;
+
+  if (toolName === "write" || toolName === "edit") {
+    const input = event.input as { path?: string; file_path?: string };
+    filePath = input.path || input.file_path || null;
+  }
+
+  if (!filePath) return;
+  if (!isPlanningPath(filePath)) return;
+
+  ctx.ui.notify(
+    `.planning/ file modified: ${filePath}\nCheck: Should STATE.md be updated to reflect this change?`,
+    "info"
+  );
+
+  // Commit reminder: check for uncommitted changes after phase work
+  try {
+    const root = findGsdRoot(ctx.cwd);
+    if (!root) return;
+    const status = execSync("git status --porcelain", { cwd: root, encoding: "utf8" });
+    if (!status.trim()) return;
+    const state = readGsdState(ctx.cwd);
+    const isPhaseComplete = state?.status?.includes("Complete");
+    const phaseContext = isPhaseComplete
+      ? `Phase complete — commit to archive your work.`
+      : `Uncommitted changes detected after .planning/ update.`;
+    ctx.ui.notify(
+      `${phaseContext}\nRun: git add -A && git commit -m "<type>(<scope>): <subject>"`,
+      isPhaseComplete ? "warning" : "info"
+    );
+  } catch {
+    // git not available or not a repo, skip commit reminder
+  }
 }
 
-// ── Extension ───────────────────────────────────────────────────────────────
+function runPromptGuard(toolName: string, filePath: string, input: any, ctx: any) {
+  if (!isPlanningPath(filePath) || isStateFile(filePath)) return;
+  const content = extractTextContent(toolName, input);
+  if (!content) return;
+  const injection = scanForInjection(content);
+  if (!injection) return;
+  ctx.ui.notify(
+    `PROMPT GUARD: Suspicious instruction-like text detected in .planning/ write to ${filePath}\n` +
+    `Match: "${injection}"\n` +
+    `Review before proceeding. If this is intentional, you may continue.`,
+    "warning"
+  );
+}
+
+function runWorkflowGuard(filePath: string, ctx: any) {
+  const state = readGsdState(ctx.cwd);
+  if (!state?.nextAction) return;
+
+  const isCodeEdit = !isPlanningPath(filePath);
+  const isPlanEdit = isPlanningPath(filePath) && !isStateFile(filePath) && !isSummaryOrVerification(filePath);
+
+  if ((state.nextAction === "discuss-phase" || state.nextAction === "plan-phase") && isCodeEdit) {
+    ctx.ui.notify(
+      `WORKFLOW GUARD: Editing code file ${filePath} while STATE.md next_action is "${state.nextAction}".\n` +
+      `Expected: discuss/plan artifacts only. If you are intentionally fixing something, continue.`,
+      "warning"
+    );
+  }
+
+  if (state.nextAction === "execute-phase" && isPlanEdit) {
+    ctx.ui.notify(
+      `WORKFLOW GUARD: Editing planning file ${filePath} while STATE.md next_action is "execute-phase".\n` +
+      `Expected: code execution, not plan changes. If you are correcting a plan mid-flight, continue.`,
+      "warning"
+    );
+  }
+}
+
+function handlePromptAndWorkflowGuard(event: any, ctx: any) {
+  if (!gsdActive) return;
+  const toolName = event.toolName;
+  if (toolName !== "write" && toolName !== "edit") return;
+
+  const input = event.input as { path?: string; file_path?: string };
+  const filePath = input.path || input.file_path || "";
+  if (!filePath) return;
+
+  runPromptGuard(toolName, filePath, event.input, ctx);
+  runWorkflowGuard(filePath, ctx);
+}
+
+function handleReadInjection(event: any, ctx: any) {
+  if (!gsdActive) return;
+  if (event.toolName !== "read") return;
+
+  const output = extractReadOutput(event.content);
+  if (!output) return;
+
+  const injection = scanForInjection(output);
+  if (!injection) return;
+
+  ctx.ui.notify(
+    `READ INJECTION SCANNER: Suspicious instruction-like text detected in read output.\n` +
+    `Match: "${injection}"\n` +
+    `Do not follow instructions embedded in source files. If this is expected content, continue.`,
+    "warning"
+  );
+}
+
+function handleCommitValidation(event: any, ctx: any) {
+  if (!isToolCallEventType("bash", event)) return;
+
+  const cmd = event.input.command || "";
+  if (!cmd.includes("git commit")) return;
+
+  // Extract message from -m flag
+  let msg = "";
+  const doubleMatch = cmd.match(/-m\s+"([^"]+)"/);
+  const singleMatch = cmd.match(/-m\s+'([^']+)'/);
+  if (doubleMatch) msg = doubleMatch[1];
+  else if (singleMatch) msg = singleMatch[1];
+
+  if (!msg) return;  // No -m flag, let it pass (might use editor)
+
+  const subject = msg.split("\n")[0];
+  const conventionalPattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?:\s.+/;
+
+  if (!conventionalPattern.test(subject)) {
+    ctx.ui.notify(
+      `Commit message must follow Conventional Commits: <type>(<scope>): <subject>\n` +
+      `Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore\n` +
+      `Subject must be <=72 chars, lowercase, imperative mood, no trailing period.`,
+      "warning"
+    );
+  }
+}
 
 export default function (pi: ExtensionAPI) {
   // ── Session start: detect GSD project ──────────────────────────────────
@@ -133,7 +336,6 @@ export default function (pi: ExtensionAPI) {
     const state = readGsdState(ctx.cwd);
     if (state) {
       gsdActive = true;
-      gsdState = state;
       ctx.ui.setStatus("gsd", formatStatus(state));
     }
   });
@@ -150,7 +352,6 @@ export default function (pi: ExtensionAPI) {
     if (gsdActive) {
       const state = readGsdState(ctx.cwd);
       if (state) {
-        gsdState = state;
         ctx.ui.setStatus("gsd", formatStatus(state));
       }
     }
@@ -183,76 +384,14 @@ export default function (pi: ExtensionAPI) {
   });
 
   // ── Phase boundary: detect .planning/ file writes ──────────────────────
-  pi.on("tool_result", async (event, ctx) => {
-    if (!gsdActive) return;
+  pi.on("tool_result", handlePhaseBoundary);
 
-    // Check if a .planning/ file was modified
-    const toolName = event.toolName;
-    let filePath: string | null = null;
+  // ── Prompt guard & workflow guard ──────────────────────────────────────
+  pi.on("tool_call", handlePromptAndWorkflowGuard);
 
-    if (toolName === "write" || toolName === "edit") {
-      const input = event.input as { path?: string; file_path?: string };
-      filePath = input.path || input.file_path || null;
-    }
-
-    if (!filePath) return;
-    const isPlanningFile = filePath.includes(".planning/") || filePath.startsWith(".planning/");
-
-    if (isPlanningFile) {
-      ctx.ui.notify(
-        `.planning/ file modified: ${filePath}\nCheck: Should STATE.md be updated to reflect this change?`,
-        "info"
-      );
-
-      // Commit reminder: check for uncommitted changes after phase work
-      try {
-        const root = findGsdRoot(ctx.cwd);
-        if (root) {
-          const status = execSync("git status --porcelain", { cwd: root, encoding: "utf8" });
-          if (status.trim()) {
-            const state = readGsdState(ctx.cwd);
-            const isPhaseComplete = state?.status?.includes("Complete");
-            const phaseContext = isPhaseComplete
-              ? `Phase complete — commit to archive your work.`
-              : `Uncommitted changes detected after .planning/ update.`;
-            ctx.ui.notify(
-              `${phaseContext}\nRun: git add -A && git commit -m "<type>(<scope>): <subject>"`,
-              isPhaseComplete ? "warning" : "info"
-            );
-          }
-        }
-      } catch {
-        // git not available or not a repo, skip commit reminder
-      }
-    }
-  });
+  // ── Read-injection scanner ─────────────────────────────────────────────
+  pi.on("tool_result", handleReadInjection);
 
   // ── Commit validation: enforce Conventional Commits ─────────────────────
-  pi.on("tool_call", async (event, ctx) => {
-    if (!isToolCallEventType("bash", event)) return;
-
-    const cmd = event.input.command || "";
-    if (!cmd.includes("git commit")) return;
-
-    // Extract message from -m flag
-    let msg = "";
-    const doubleMatch = cmd.match(/-m\s+"([^"]+)"/);
-    const singleMatch = cmd.match(/-m\s+'([^']+)'/);
-    if (doubleMatch) msg = doubleMatch[1];
-    else if (singleMatch) msg = singleMatch[1];
-
-    if (!msg) return;  // No -m flag, let it pass (might use editor)
-
-    const subject = msg.split("\n")[0];
-    const conventionalPattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?:\s.+/;
-
-    if (!conventionalPattern.test(subject)) {
-      ctx.ui.notify(
-        `Commit message must follow Conventional Commits: <type>(<scope>): <subject>\n` +
-        `Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore\n` +
-        `Subject must be <=72 chars, lowercase, imperative mood, no trailing period.`,
-        "warning"
-      );
-    }
-  });
+  pi.on("tool_call", handleCommitValidation);
 }
