@@ -519,6 +519,12 @@ const planResult = await runs.run('plan-phase', {
 ## Canonical references:
 - [file:line] — [what to follow]
 
+## Security coverage (if applicable):
+If this phase touches authentication, authorization, cryptography, PII, payments, files, uploads, or external APIs:
+- Include at least one task dedicated to security (validation, auth checks, secrets handling, rate limiting, etc.)
+- Add verifiable security truths to `must_haves`
+- Recommend a `/gsd-security-audit` before shipping
+
 ## Output:
 Write one or more PLAN.md files to: .planning/phases/<NN>-<slug>/
 Each plan should have:
@@ -762,9 +768,47 @@ The `gsd-verifier` reads actual code to verify claims, produces VERIFICATION.md 
 
 ### Handle Verdict
 
-- **passed** → proceed to Ship
+- **passed** → proceed to Ship (with optional Security Gate)
 - **gaps_found** → generate fix plans, loop back to Execute (Step 3) for gap fixes
 - **human_needed** → present findings to user, wait for decision
+
+---
+
+## Step 4.5: Security Gate (Optional)
+
+Before shipping, run a security audit for phases touching authentication, authorization, cryptography, PII, payments, or privilege boundaries.
+
+**When to run:**
+- Phase goal or requirements mention auth, crypto, users, roles, permissions, files, uploads, or external APIs
+- `gsd-plan-checker` flagged Dimension 10 (Security Coverage)
+- Any PLAN.md `must_haves` include security truths
+
+**How to run:**
+
+```javascript
+const auditResult = await runs.run('security-audit', {
+  agent: 'gsd-security-audit',
+  context: 'fresh',
+  task: `Run OWASP ASVS security audit for Phase <NN>.
+
+Repo: <repo-path>
+Phase directory: .planning/phases/<NN>-<slug>/
+Output: .planning/phases/<NN>-<slug>/<NN>-SECURITY-AUDIT.md
+
+Read ROADMAP.md, CONTEXT.md, all PLAN.md and SUMMARY.md files, then scan the actual codebase.`,
+  output: '.planning/phases/<NN>-<slug>/<NN>-SECURITY-AUDIT.md',
+  gate: 'test -s .planning/phases/<NN>-<slug>/<NN>-SECURITY-AUDIT.md'
+});
+```
+
+Or use the prompt template / extension tool:
+- `/gsd-security-audit <repo-path> <phase-dir> <output-path>`
+- `gsd_security_audit({ repoPath, phaseDir, outputPath })`
+
+**Handle findings:**
+- **CRITICAL** → loop back to Execute; fixes must ship with the phase
+- **HIGH** → user decision: fix now, accept risk, or spawn follow-up phase
+- **MEDIUM / LOW** → capture in BACKLOG.md for prioritization
 
 ---
 

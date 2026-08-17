@@ -112,6 +112,14 @@ Every task has required fields (matching `templates/plan.md`):
 
 **Location:** `.planning/phases/<NN>-<slug>/<NN>-<PP>-PLAN.md`
 
+### Security-sensitive phases
+
+If this phase touches authentication, authorization, cryptography, PII, file uploads, payments, or external API boundaries:
+
+- Include at least one task addressing security explicitly
+- Add verifiable security truths to `must_haves.truths` (e.g., "Admin endpoints require admin role", "Passwords are hashed with bcrypt/argon2")
+- Request a `/gsd-security-audit` checkpoint if the team has not already audited this surface
+
 ```markdown
 ---
 phase: <NN>

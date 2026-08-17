@@ -165,6 +165,17 @@ Are all research questions resolved?
 
 Check RESEARCH.md for `## Open Questions` section. If questions lack resolution markers, flag as BLOCKER.
 
+### Dimension 10: Security Coverage
+
+For phases touching authentication, authorization, cryptography, PII, payments, or privilege boundaries:
+
+1. Verify the phase has at least one task or dedicated plan addressing security (input validation, auth checks, secrets handling, TLS, rate limiting, etc.).
+2. Verify `must_haves` include verifiable security truths (e.g., "Passwords are hashed with bcrypt/argon2", "All admin endpoints require admin role").
+3. Check that external packages handling security are verified for legitimacy.
+4. If the phase is security-sensitive and no security audit task or `checkpoint:human-verify` exists, flag as BLOCKER and recommend running `/gsd-security-audit` before shipping.
+
+If the phase has no security-sensitive scope, this dimension passes automatically.
+
 ## Output
 
 Return a structured report:
@@ -201,4 +212,5 @@ Return a structured report:
 | 7. Context Compliance & Scope Reduction | ✅ / ❌ | |
 | 8. Project Instructions Compliance | ✅ / ⚠️ | |
 | 9. Research Resolution | ✅ / ❌ | |
+| 10. Security Coverage | ✅ / ❌ | |
 ```

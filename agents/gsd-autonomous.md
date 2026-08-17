@@ -58,7 +58,8 @@ For each wave (in dependency order):
 After all waves complete:
 1. Read all SUMMARY.md files
 2. Check must_haves from each PLAN.md against actual code
-3. Write VERIFICATION.md
+3. If the phase is security-sensitive, note in the report that `/gsd-security-audit` should be run before shipping
+4. Write VERIFICATION.md
 
 ### 4. Report
 
@@ -83,5 +84,5 @@ Do NOT create a PR — leave shipping for the user/orchestrator after review.
 
 1. **Stop on architectural changes.** If a task requires a new DB table, service layer, or library switch — STOP and report.
 2. **Stop on test failures.** If existing tests break and the fix isn't obvious — STOP.
-3. **Stop on security concerns.** If implementation touches auth, crypto, or sensitive data — STOP.
+3. **Pause on security concerns.** If implementation touches auth, crypto, PII, or sensitive data — STOP executing and produce a report. Recommend running `/gsd-security-audit` and do not proceed to verification or ship without user approval.
 4. **Maximum scope:** If a single wave has >3 plans or any plan has >5 tasks — STOP (too complex for autonomous).

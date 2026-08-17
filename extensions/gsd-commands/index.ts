@@ -220,6 +220,35 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
+	pi.registerTool({
+		name: "gsd_security_audit",
+		label: "GSD Security Audit",
+		description: "Prepare the subagent call for gsd-security-audit to produce SECURITY-AUDIT.md for a phase.",
+		parameters: Type.Object({
+			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
+			phaseDir: Type.String({ description: "Path to the phase directory (absolute or relative to session cwd)" }),
+			outputPath: Type.String({ description: "Path for SECURITY-AUDIT.md (absolute or relative to session cwd)" }),
+		}),
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(params.repoPath, params.outputPath, ctx);
+			const phaseDir = resolveAbsolutePath(params.phaseDir, ctx.cwd);
+			const task = [
+				"Run a security audit for this phase and write SECURITY-AUDIT.md.",
+				``,
+				`Repo: ${repoPath}`,
+				`Phase directory (absolute path): ${phaseDir}`,
+				`Output (absolute path): ${outputPath}`,
+				``,
+				"Read ROADMAP.md, CONTEXT.md, all PLAN.md and SUMMARY.md files in the phase directory, then scan the actual codebase for OWASP ASVS categories, trust boundaries, and vulnerabilities.",
+				"Write the complete SECURITY-AUDIT.md to the absolute output path using the write tool.",
+				"Create parent directories with bash (mkdir -p) if needed.",
+				"Verify the file exists with ls -la before returning.",
+			].join("\n");
+			const call = buildSubagentCall("gsd-security-audit", "security-audit", task, outputPath);
+			return buildToolResult(call, outputPath, repoPath);
+		},
+	});
+
 	registerStateTools(pi);
 	registerBacklogTools(pi);
 }

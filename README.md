@@ -71,11 +71,12 @@ The onboarding process:
 
 ### Prompt commands
 
-GSD registers pi prompt templates (`/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Use them instead of hand-rolling workflow scripts.
+GSD registers pi prompt templates (`/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`, `/gsd-security-audit`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Use them instead of hand-rolling workflow scripts.
 
 ```
 /gsd-onboard C:/Sources/my-project C:/Sources/my-project/.planning/codebase/MAPPING.md
 /gsd-research C:/Sources/my-project C:/Sources/my-project/.planning/phases/01-foo/01-RESEARCH.md
+/gsd-security-audit C:/Sources/my-project C:/Sources/my-project/.planning/phases/03-auth C:/Sources/my-project/.planning/phases/03-auth/03-SECURITY-AUDIT.md
 ```
 
 Use forward slashes in paths. See `prompts/` in this package.
@@ -90,6 +91,7 @@ For even more reliability, the `gsd-commands` extension registers typed tools th
 - `gsd_plan({ repoPath, inputFiles, outputPath })`
 - `gsd_execute({ repoPath, planPath, outputPath })`
 - `gsd_verify({ repoPath, phaseDir, outputPath })`
+- `gsd_security_audit({ repoPath, phaseDir, outputPath })`
 
 Each tool validates the inputs, resolves absolute paths, creates the output directory, and returns the exact `subagent({ workflowScript: ... })` call. The orchestrator agent then invokes it directly and waits for completion, removing hand-rolled workflow-script construction and copy-paste.
 
