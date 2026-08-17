@@ -23,27 +23,27 @@ mkdir -p ".planning/phases"
 # Create PROJECT.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    "${TEMPLATES_DIR}/project.md" > .planning/PROJECT.md
+    "${TEMPLATES_DIR}/project.md" >.planning/PROJECT.md
 
 # Create ROADMAP.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    "${TEMPLATES_DIR}/roadmap.md" > .planning/ROADMAP.md
+    "${TEMPLATES_DIR}/roadmap.md" >.planning/ROADMAP.md
 
 # Create REQUIREMENTS.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    "${TEMPLATES_DIR}/requirements.md" > .planning/REQUIREMENTS.md
+    "${TEMPLATES_DIR}/requirements.md" >.planning/REQUIREMENTS.md
 
 # Create STATE.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    "${TEMPLATES_DIR}/state.md" > .planning/STATE.md
+    "${TEMPLATES_DIR}/state.md" >.planning/STATE.md
 
 # Create CONVENTIONS.md from template
 sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
     -e "s/<DATE>/${DATE}/g" \
-    "${TEMPLATES_DIR}/conventions.md" > .planning/CONVENTIONS.md
+    "${TEMPLATES_DIR}/conventions.md" >.planning/CONVENTIONS.md
 
 # Create BACKLOG.md from template
 cp "${TEMPLATES_DIR}/backlog.md" .planning/BACKLOG.md

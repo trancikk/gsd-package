@@ -13,9 +13,10 @@
  */
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
-import { readFileSync, existsSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { execSync } from "node:child_process";
+import { findGsdRoot, parseStateMd, formatStatus, type GsdState } from "./status";
 
 // ── Config ──────────────────────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ const INJECTION_PATTERNS = [
   /ignore\s+(all\s+)?(previous|prior|earlier)\s+(instructions?|commands?|prompts?)/i,
   /disregard\s+(your\s+)?(system\s+prompt|instructions?|training)/i,
   /you\s+(are\s+now|should\s+act\s+as|must\s+pretend)/i,
-  /new\s+(system\s+)?prompt\s*[:\-]/i,
+  /new\s+(system\s+)?prompt\s*[:-]/i,
   /override\s+(previous|prior)\s+(instructions?|constraints?)/i,
   /system\s*:\s*ignore/i,
   /ignore\s+above\s+instructions?/i,
@@ -42,19 +43,6 @@ const SUSPICIOUS_MARKDOWN_PATTERNS = [
 
 let gsdActive = false;
 let lastContextWarning = "";
-
-interface GsdState {
-  milestone: string;
-  milestoneName: string;
-  status: string;
-  activePhase: string | null;
-  nextAction: string | null;
-  nextPhases: string[] | null;
-  percent: number | null;
-  phaseNum: string | null;
-  phaseTotal: string | null;
-  phaseName: string | null;
-}
 
 // ── Guards ──────────────────────────────────────────────────────────────────
 
@@ -115,69 +103,6 @@ function extractReadOutput(content: any[]): string | null {
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
-function findGsdRoot(cwd: string): string | null {
-  let current = cwd;
-  for (let i = 0; i < 10; i++) {
-    if (existsSync(join(current, ".planning", "STATE.md"))) return current;
-    const parent = dirname(current);
-    if (parent === current) break;
-    current = parent;
-  }
-  return null;
-}
-
-function parseStateMd(content: string): GsdState {
-  const state: GsdState = {
-    milestone: "",
-    milestoneName: "",
-    status: "",
-    activePhase: null,
-    nextAction: null,
-    nextPhases: null,
-    percent: null,
-    phaseNum: null,
-    phaseTotal: null,
-    phaseName: null,
-  };
-
-  const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-  if (fmMatch) {
-    const fm = fmMatch[1];
-    for (const line of fm.split(/\r?\n/)) {
-      const m = line.match(/^(\w+):\s*(.+)/);
-      if (!m) continue;
-      const [, key, val] = m;
-      const v = val.trim().replace(/^["']|["']$/g, "");
-      if (key === "milestone") state.milestone = v;
-      if (key === "milestone_name") state.milestoneName = v;
-      if (key === "status") state.status = v === "null" ? "" : v;
-      if (key === "active_phase")
-        state.activePhase = v === "null" || v === "" ? null : v;
-      if (key === "next_action")
-        state.nextAction = v === "null" || v === "" ? null : v;
-      if (key === "percent") state.percent = parseInt(v, 10);
-    }
-    const npFlowMatch = fm.match(/^next_phases:\s*\[([^\]]*)\]/m);
-    if (npFlowMatch) {
-      state.nextPhases = npFlowMatch[1]
-        .split(",")
-        .map((s) => s.trim().replace(/^["']|["']$/g, ""))
-        .filter(Boolean);
-    }
-  }
-
-  const phaseMatch = content.match(
-    /^Phase:\s*(\d+)\s+of\s+(\d+)(?:\s+\(([^)]+)\))?/m,
-  );
-  if (phaseMatch) {
-    state.phaseNum = phaseMatch[1];
-    state.phaseTotal = phaseMatch[2];
-    state.phaseName = phaseMatch[3] || null;
-  }
-
-  return state;
-}
-
 function readGsdState(cwd: string): GsdState | null {
   const root = findGsdRoot(cwd);
   if (!root) return null;
@@ -187,19 +112,6 @@ function readGsdState(cwd: string): GsdState | null {
   } catch {
     return null;
   }
-}
-
-function formatStatus(state: GsdState): string {
-  const parts: string[] = [];
-  if (state.milestone) parts.push(state.milestone);
-  if (state.activePhase) {
-    parts.push(`Phase ${state.activePhase} ${state.status}`);
-  } else if (state.nextAction && state.nextPhases) {
-    parts.push(`next ${state.nextAction} ${state.nextPhases.join("/")}`);
-  } else if (state.status) {
-    parts.push(state.status);
-  }
-  return parts.join(" · ");
 }
 
 // ── Extension ───────────────────────────────────────────────────────────────

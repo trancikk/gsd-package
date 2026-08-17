@@ -28,10 +28,12 @@ paused_at: null
 # State
 
 ## Project Reference
+
 - **Core value:** [From PROJECT.md]
 - **Current focus:** Awaiting first phase
 
 ## Current Position
+
 - **Phase:** None active
 - **Plan:** None
 - **Status:** Initializing
@@ -39,10 +41,12 @@ paused_at: null
 - **Progress:** [░░░░░░░░░░] 0%
 
 ## Accumulated Context
+
 - **Decisions:** None yet
 - **Blockers/Concerns:** None
 
 ## Session Continuity
+
 - **Last session:** <TIMESTAMP>
 - **Stopped at:** Project initialized
 - **Resume file:** None

@@ -40,18 +40,31 @@ paused_at: null
 
 function gitCommit(repoPath: string, message: string) {
 	spawnSync("git", ["add", "."], { cwd: repoPath, encoding: "utf8" });
-	spawnSync("git", ["commit", "-m", message], { cwd: repoPath, encoding: "utf8" });
+	spawnSync("git", ["commit", "-m", message], {
+		cwd: repoPath,
+		encoding: "utf8",
+	});
 }
 
 async function withTempRepo(cb: (repoPath: string) => Promise<void>) {
 	const tmp = path.join(process.cwd(), `.tmp-workstream-test-${Date.now()}`);
 	fs.mkdirSync(path.join(tmp, ".planning", "phases"), { recursive: true });
-	fs.writeFileSync(path.join(tmp, ".planning", "STATE.md"), stateTemplate, "utf8");
+	fs.writeFileSync(
+		path.join(tmp, ".planning", "STATE.md"),
+		stateTemplate,
+		"utf8",
+	);
 
 	// Initialize git repo
 	spawnSync("git", ["init"], { cwd: tmp, encoding: "utf8" });
-	spawnSync("git", ["config", "user.email", "test@example.com"], { cwd: tmp, encoding: "utf8" });
-	spawnSync("git", ["config", "user.name", "Test"], { cwd: tmp, encoding: "utf8" });
+	spawnSync("git", ["config", "user.email", "test@example.com"], {
+		cwd: tmp,
+		encoding: "utf8",
+	});
+	spawnSync("git", ["config", "user.name", "Test"], {
+		cwd: tmp,
+		encoding: "utf8",
+	});
 	spawnSync("git", ["checkout", "-b", "main"], { cwd: tmp, encoding: "utf8" });
 	fs.writeFileSync(path.join(tmp, "README.md"), "# test\n", "utf8");
 	gitCommit(tmp, "initial");
@@ -72,7 +85,13 @@ function mockPi() {
 		async call(name: string, params: any, repoPath: string) {
 			const tool = tools.find((t) => t.name === name);
 			if (!tool) throw new Error(`Tool not found: ${name}`);
-			const result = await tool.execute("test-id", params, undefined as any, undefined as any, { cwd: repoPath });
+			const result = await tool.execute(
+				"test-id",
+				params,
+				undefined as any,
+				undefined as any,
+				{ cwd: repoPath },
+			);
 			return JSON.parse((result as any).content[0].text);
 		},
 	};
@@ -106,7 +125,11 @@ async function main() {
 		console.log("--- workstream tests ---");
 
 		// list empty
-		let list = await pi.call("gsd_workstream", { repoPath, operation: "list" }, repoPath);
+		let list = await pi.call(
+			"gsd_workstream",
+			{ repoPath, operation: "list" },
+			repoPath,
+		);
 		assertEqual(list.count, 0, "empty list has zero items");
 		assertEqual(list.active, undefined, "no active workstream initially");
 
@@ -143,7 +166,11 @@ async function main() {
 		assertEqual(add2.item.branch, "ui-polish", "explicit branch name used");
 
 		// list all
-		list = await pi.call("gsd_workstream", { repoPath, operation: "list" }, repoPath);
+		list = await pi.call(
+			"gsd_workstream",
+			{ repoPath, operation: "list" },
+			repoPath,
+		);
 		assertEqual(list.count, 2, "two workstreams listed");
 		assertEqual(list.active, "WS-002", "most recently added is active");
 
@@ -158,12 +185,21 @@ async function main() {
 		);
 		assertEqual(switched.item.id, "WS-001", "switched to WS-001");
 		assertTrue(switched.checkoutResult?.ok, "checkout succeeded");
-		const branchAfterSwitch = spawnSync("git", ["branch", "--show-current"], { cwd: repoPath, encoding: "utf8" }).stdout.trim();
+		const branchAfterSwitch = spawnSync("git", ["branch", "--show-current"], {
+			cwd: repoPath,
+			encoding: "utf8",
+		}).stdout.trim();
 		assertEqual(branchAfterSwitch, "ws001", "git branch changed to ws001");
 
 		// state.md active_workstream updated
-		const stateContent = fs.readFileSync(path.join(repoPath, ".planning", "STATE.md"), "utf8");
-		assertTrue(stateContent.includes("active_workstream: WS-001"), "STATE.md active_workstream updated");
+		const stateContent = fs.readFileSync(
+			path.join(repoPath, ".planning", "STATE.md"),
+			"utf8",
+		);
+		assertTrue(
+			stateContent.includes("active_workstream: WS-001"),
+			"STATE.md active_workstream updated",
+		);
 
 		// pause
 		const paused = await pi.call(
@@ -172,7 +208,11 @@ async function main() {
 			repoPath,
 		);
 		assertEqual(paused.item.status, "paused", "workstream paused");
-		assertEqual(paused.active, undefined, "no active workstream after pausing active one");
+		assertEqual(
+			paused.active,
+			undefined,
+			"no active workstream after pausing active one",
+		);
 
 		// resume
 		const resumed = await pi.call(
@@ -207,14 +247,30 @@ async function main() {
 		assertEqual(closed.item.status, "closed", "workstream closed");
 
 		// filter by status
-		list = await pi.call("gsd_workstream", { repoPath, operation: "list", status: "active" }, repoPath);
+		list = await pi.call(
+			"gsd_workstream",
+			{ repoPath, operation: "list", status: "active" },
+			repoPath,
+		);
 		assertEqual(list.count, 0, "no active workstreams after merge/close");
 
 		// file content round-trip
-		const wsContent = fs.readFileSync(path.join(repoPath, ".planning", "WORKSTREAMS.md"), "utf8");
-		assertTrue(wsContent.includes("WS-001: Auth refactor v2"), "WORKSTREAMS.md contains updated WS-001");
-		assertTrue(wsContent.includes("WS-002: UI polish"), "WORKSTREAMS.md contains WS-002");
-		assertTrue(wsContent.indexOf("merged") > 0, "WORKSTREAMS.md contains merged status");
+		const wsContent = fs.readFileSync(
+			path.join(repoPath, ".planning", "WORKSTREAMS.md"),
+			"utf8",
+		);
+		assertTrue(
+			wsContent.includes("WS-001: Auth refactor v2"),
+			"WORKSTREAMS.md contains updated WS-001",
+		);
+		assertTrue(
+			wsContent.includes("WS-002: UI polish"),
+			"WORKSTREAMS.md contains WS-002",
+		);
+		assertTrue(
+			wsContent.indexOf("merged") > 0,
+			"WORKSTREAMS.md contains merged status",
+		);
 	});
 
 	console.log("\nAll workstream tests passed.");

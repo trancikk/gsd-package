@@ -2,7 +2,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { spawnSync } from "node:child_process";
 import { Type } from "typebox";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
 import { resolveAbsolutePath, writeAtomic } from "./utils";
 
@@ -57,8 +60,13 @@ function ensureWorkstreamsFile(repoPath: string): string {
 	return wp;
 }
 
-function readWorkstreams(repoPath: string, ensure = true): { content: string; items: Workstream[]; activeId?: string } {
-	const wp = ensure ? ensureWorkstreamsFile(repoPath) : workstreamsPath(repoPath);
+function readWorkstreams(
+	repoPath: string,
+	ensure = true,
+): { content: string; items: Workstream[]; activeId?: string } {
+	const wp = ensure
+		? ensureWorkstreamsFile(repoPath)
+		: workstreamsPath(repoPath);
 	if (!fs.existsSync(wp)) {
 		return { content: defaultTemplate(), items: [], activeId: undefined };
 	}
@@ -69,10 +77,16 @@ function readWorkstreams(repoPath: string, ensure = true): { content: string; it
 }
 
 function parseActiveWorkstream(content: string): string | undefined {
-	const match = content.match(/## Active workstream\s*\n\s*(?:\*\*)?([^*\n]+?)(?:\*\*)?\s*(?=\n## |\n# |$)/s);
+	const match = content.match(
+		/## Active workstream\s*\n\s*(?:\*\*)?([^*\n]+?)(?:\*\*)?\s*(?=\n## |\n# |$)/s,
+	);
 	if (!match) return undefined;
 	const line = match[1].trim();
-	if (line.toLowerCase().startsWith("none") || line.toLowerCase().startsWith("no active")) return undefined;
+	if (
+		line.toLowerCase().startsWith("none") ||
+		line.toLowerCase().startsWith("no active")
+	)
+		return undefined;
 	const idMatch = line.match(/^(WS-\d+)/);
 	return idMatch ? idMatch[1] : undefined;
 }
@@ -84,7 +98,9 @@ function renderActiveLine(item?: Workstream): string {
 
 function parseWorkstreams(content: string): Workstream[] {
 	const items: Workstream[] = [];
-	const sectionMatch = content.match(/## Workstreams\b([\s\S]*?)(?=\n## |\n# |$)/);
+	const sectionMatch = content.match(
+		/## Workstreams\b([\s\S]*?)(?=\n## |\n# |$)/,
+	);
 	if (!sectionMatch) return items;
 	const sectionBody = sectionMatch[1];
 
@@ -100,8 +116,10 @@ function parseWorkstreams(content: string): Workstream[] {
 			name: title,
 			branch: extractField(body, "Branch") || id.toLowerCase().replace("-", ""),
 			status: (extractField(body, "Status") as WorkstreamStatus) || "active",
-			created: extractField(body, "Created") || new Date().toISOString().slice(0, 10),
-			updated: extractField(body, "Updated") || new Date().toISOString().slice(0, 10),
+			created:
+				extractField(body, "Created") || new Date().toISOString().slice(0, 10),
+			updated:
+				extractField(body, "Updated") || new Date().toISOString().slice(0, 10),
 			base_branch: extractField(body, "Base branch"),
 			linked_phase: extractField(body, "Linked phase") || undefined,
 			linked_backlog_item: extractField(body, "Linked backlog item") || undefined,
@@ -149,7 +167,11 @@ ${item.description}
 `;
 }
 
-function rebuildWorkstreams(content: string, items: Workstream[], activeItem?: Workstream): string {
+function rebuildWorkstreams(
+	content: string,
+	items: Workstream[],
+	activeItem?: Workstream,
+): string {
 	const introMatch = content.match(/^(.*?)## Active workstream\b/s);
 	const intro = introMatch
 		? `${introMatch[1].trimEnd()}\n\n`
@@ -182,7 +204,10 @@ function today(): string {
 	return new Date().toISOString().slice(0, 10);
 }
 
-function git(repoPath: string, args: string[]): { ok: boolean; stdout: string; stderr: string } {
+function git(
+	repoPath: string,
+	args: string[],
+): { ok: boolean; stdout: string; stderr: string } {
 	const result = spawnSync("git", args, { cwd: repoPath, encoding: "utf8" });
 	return {
 		ok: result.status === 0,
@@ -204,15 +229,30 @@ function branchExists(repoPath: string, branch: string): boolean {
 	return git(repoPath, ["show-ref", "--verify", `--refs/heads/${branch}`]).ok;
 }
 
-function createGitBranch(repoPath: string, branch: string, baseBranch?: string): { ok: boolean; message: string } {
-	const args = baseBranch ? ["checkout", "-b", branch, baseBranch] : ["checkout", "-b", branch];
+function createGitBranch(
+	repoPath: string,
+	branch: string,
+	baseBranch?: string,
+): { ok: boolean; message: string } {
+	const args = baseBranch
+		? ["checkout", "-b", branch, baseBranch]
+		: ["checkout", "-b", branch];
 	const result = git(repoPath, args);
-	return { ok: result.ok, message: result.ok ? `Created branch ${branch}` : result.stderr };
+	return {
+		ok: result.ok,
+		message: result.ok ? `Created branch ${branch}` : result.stderr,
+	};
 }
 
-function checkoutGitBranch(repoPath: string, branch: string): { ok: boolean; message: string } {
+function checkoutGitBranch(
+	repoPath: string,
+	branch: string,
+): { ok: boolean; message: string } {
 	const result = git(repoPath, ["checkout", branch]);
-	return { ok: result.ok, message: result.ok ? `Checked out ${branch}` : result.stderr };
+	return {
+		ok: result.ok,
+		message: result.ok ? `Checked out ${branch}` : result.stderr,
+	};
 }
 
 function isWorktreeClean(repoPath: string): boolean {
@@ -231,12 +271,17 @@ function buildToolResultText(payload: any): AgentToolResult<any> {
 	};
 }
 
-function updateStateActiveWorkstream(repoPath: string, workstreamId?: string): void {
+function updateStateActiveWorkstream(
+	repoPath: string,
+	workstreamId?: string,
+): void {
 	const sp = statePath(repoPath);
 	if (!fs.existsSync(sp)) return;
 	const content = fs.readFileSync(sp, "utf8");
 	const marker = /^(active_workstream:\s*.*)$/m;
-	const replacement = workstreamId ? `active_workstream: ${workstreamId}` : "active_workstream: null";
+	const replacement = workstreamId
+		? `active_workstream: ${workstreamId}`
+		: "active_workstream: null";
 	const newContent = marker.test(content)
 		? content.replace(marker, replacement)
 		: content.replace(/^(---\n[\s\S]*?\n)(---\n)/m, `$1${replacement}\n$2`);
@@ -255,10 +300,14 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 			}),
 			operation: Type.Union(
 				[
-					Type.Literal("list", { description: "List workstreams, optionally filtered" }),
+					Type.Literal("list", {
+						description: "List workstreams, optionally filtered",
+					}),
 					Type.Literal("add", { description: "Create a new workstream" }),
 					Type.Literal("update", { description: "Update workstream fields" }),
-					Type.Literal("switch", { description: "Activate a workstream and optionally checkout its branch" }),
+					Type.Literal("switch", {
+						description: "Activate a workstream and optionally checkout its branch",
+					}),
 					Type.Literal("pause", { description: "Pause a workstream" }),
 					Type.Literal("resume", { description: "Resume a paused workstream" }),
 					Type.Literal("merge", { description: "Mark a workstream as merged" }),
@@ -266,24 +315,64 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 				],
 				{ description: "Operation to perform" },
 			),
-			id: Type.Optional(Type.String({ description: "Workstream ID, e.g. WS-001 (for update/switch/pause/resume/merge/close)" })),
-			name: Type.Optional(Type.String({ description: "Workstream name (for add/update)" })),
-			branch: Type.Optional(Type.String({ description: "Git branch name (for add; defaults to workstream id)" })),
-			baseBranch: Type.Optional(Type.String({ description: "Base branch to branch from (for add; defaults to current branch)" })),
-			linkedPhase: Type.Optional(Type.String({ description: "Phase number linked to this workstream" })),
-			linkedBacklogItem: Type.Optional(Type.String({ description: "Backlog item ID linked to this workstream" })),
-			description: Type.Optional(Type.String({ description: "Workstream description (for add/update)" })),
-			status: Type.Optional(Type.String({ description: "Filter by status (for list)" })),
-			checkout: Type.Optional(Type.Boolean({ description: "Whether to checkout the branch on switch (default true)" })),
-			createBranch: Type.Optional(Type.Boolean({ description: "Whether to create the Git branch on add (default true if repo is clean)" })),
+			id: Type.Optional(
+				Type.String({
+					description:
+						"Workstream ID, e.g. WS-001 (for update/switch/pause/resume/merge/close)",
+				}),
+			),
+			name: Type.Optional(
+				Type.String({ description: "Workstream name (for add/update)" }),
+			),
+			branch: Type.Optional(
+				Type.String({
+					description: "Git branch name (for add; defaults to workstream id)",
+				}),
+			),
+			baseBranch: Type.Optional(
+				Type.String({
+					description:
+						"Base branch to branch from (for add; defaults to current branch)",
+				}),
+			),
+			linkedPhase: Type.Optional(
+				Type.String({ description: "Phase number linked to this workstream" }),
+			),
+			linkedBacklogItem: Type.Optional(
+				Type.String({ description: "Backlog item ID linked to this workstream" }),
+			),
+			description: Type.Optional(
+				Type.String({ description: "Workstream description (for add/update)" }),
+			),
+			status: Type.Optional(
+				Type.String({ description: "Filter by status (for list)" }),
+			),
+			checkout: Type.Optional(
+				Type.Boolean({
+					description: "Whether to checkout the branch on switch (default true)",
+				}),
+			),
+			createBranch: Type.Optional(
+				Type.Boolean({
+					description:
+						"Whether to create the Git branch on add (default true if repo is clean)",
+				}),
+			),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
 
 			if (params.operation === "list") {
 				const listRead = readWorkstreams(repoPath, false);
 				let filtered = listRead.items;
-				if (params.status) filtered = filtered.filter((i) => i.status === params.status);
+				if (params.status)
+					filtered = filtered.filter((i) => i.status === params.status);
 				return buildToolResultText({
 					ok: true,
 					path: workstreamsPath(repoPath),
@@ -306,7 +395,9 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 					if (!baseBranch) {
 						baseBranch = currentBranch(repoPath);
 					}
-					branch = params.branch || `ws${String(nextId([]).replace("WS-", "")).padStart(3, "0")}`;
+					branch =
+						params.branch ||
+						`ws${String(nextId([]).replace("WS-", "")).padStart(3, "0")}`;
 					if (branchExists(repoPath, branch)) {
 						branchMessage = `Branch ${branch} already exists; not recreated.`;
 					} else if (isWorktreeClean(repoPath)) {
@@ -314,7 +405,8 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 						branchCreated = createResult.ok;
 						branchMessage = createResult.message;
 					} else {
-						branchMessage = "Worktree is dirty; branch not created. Create it manually or commit changes first.";
+						branchMessage =
+							"Worktree is dirty; branch not created. Create it manually or commit changes first.";
 					}
 				}
 
@@ -359,13 +451,21 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 			if (params.operation === "update") {
 				if (params.name !== undefined) item.name = params.name;
 				if (params.description !== undefined) item.description = params.description;
-				if (params.linkedPhase !== undefined) item.linked_phase = params.linkedPhase;
-				if (params.linkedBacklogItem !== undefined) item.linked_backlog_item = params.linkedBacklogItem;
+				if (params.linkedPhase !== undefined)
+					item.linked_phase = params.linkedPhase;
+				if (params.linkedBacklogItem !== undefined)
+					item.linked_backlog_item = params.linkedBacklogItem;
 				item.updated = today();
-				const activeItem = activeId === item.id ? item : items.find((i) => i.id === activeId);
+				const activeItem =
+					activeId === item.id ? item : items.find((i) => i.id === activeId);
 				const newContent = rebuildWorkstreams(content, items, activeItem);
 				writeAtomic(wp, newContent);
-				return buildToolResultText({ ok: true, path: wp, operation: "update", item });
+				return buildToolResultText({
+					ok: true,
+					path: wp,
+					operation: "update",
+					item,
+				});
 			}
 
 			if (params.operation === "switch") {
@@ -375,7 +475,11 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 					if (isWorktreeClean(repoPath)) {
 						checkoutResult = checkoutGitBranch(repoPath, item.branch);
 					} else {
-						checkoutResult = { ok: false, message: "Worktree is dirty; cannot checkout branch. Commit or stash changes first." };
+						checkoutResult = {
+							ok: false,
+							message:
+								"Worktree is dirty; cannot checkout branch. Commit or stash changes first.",
+						};
 					}
 				}
 				const newContent = rebuildWorkstreams(content, items, item);
@@ -412,7 +516,13 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 				updateStateActiveWorkstream(repoPath, activeItem?.id);
 			}
 
-			return buildToolResultText({ ok: true, path: wp, operation: params.operation, item, active: activeItem?.id });
+			return buildToolResultText({
+				ok: true,
+				path: wp,
+				operation: params.operation,
+				item,
+				active: activeItem?.id,
+			});
 		},
 	});
 }

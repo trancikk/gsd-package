@@ -33,7 +33,10 @@ export function buildCrossPlatformGate(outputPath: string): string {
  */
 export function writeAtomic(filePath: string, content: string): void {
 	const dir = path.dirname(filePath);
-	const tmpPath = path.join(dir, `.tmp-${path.basename(filePath)}-${Date.now()}`);
+	const tmpPath = path.join(
+		dir,
+		`.tmp-${path.basename(filePath)}-${Date.now()}`,
+	);
 	fs.writeFileSync(tmpPath, content, "utf8");
 	try {
 		fs.renameSync(tmpPath, filePath);

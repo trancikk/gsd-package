@@ -15,9 +15,16 @@
  *    JSON, avoiding the need for agents to drive a CLI.
  */
 import { Type } from "typebox";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type {
+	ExtensionAPI,
+	ExtensionContext,
+} from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import { resolveAbsolutePath, ensureOutputDir, buildCrossPlatformGate } from "./utils";
+import {
+	resolveAbsolutePath,
+	ensureOutputDir,
+	buildCrossPlatformGate,
+} from "./utils";
 import { registerStateTools } from "./state";
 import { registerBacklogTools } from "./backlog";
 import { registerWorkstreamTools } from "./workstream";
@@ -85,13 +92,29 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_onboard",
 		label: "GSD Onboard",
-		description: "Prepare the subagent call for gsd-phase-researcher in onboard mode to produce a codebase MAPPING.md.",
+		description:
+			"Prepare the subagent call for gsd-phase-researcher in onboard mode to produce a codebase MAPPING.md.",
 		parameters: Type.Object({
-			repoPath: Type.String({ description: "Path to the repo to map (absolute or relative to session cwd)" }),
-			outputPath: Type.String({ description: "Path for MAPPING.md (absolute or relative to session cwd)" }),
+			repoPath: Type.String({
+				description:
+					"Path to the repo to map (absolute or relative to session cwd)",
+			}),
+			outputPath: Type.String({
+				description: "Path for MAPPING.md (absolute or relative to session cwd)",
+			}),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
-			const { repoPath, outputPath } = resolveAndEnsure(params.repoPath, params.outputPath, ctx);
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
 			const task = [
 				"Map this existing codebase for GSD onboarding.",
 				``,
@@ -103,7 +126,12 @@ export default function (pi: ExtensionAPI) {
 				"Create parent directories with bash (mkdir -p) if needed.",
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
-			const call = buildSubagentCall("gsd-phase-researcher", "onboard-map", task, outputPath);
+			const call = buildSubagentCall(
+				"gsd-phase-researcher",
+				"onboard-map",
+				task,
+				outputPath,
+			);
 			return buildToolResult(call, outputPath, repoPath);
 		},
 	});
@@ -111,14 +139,32 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_research",
 		label: "GSD Research",
-		description: "Prepare the subagent call for gsd-phase-researcher to produce a phase RESEARCH.md.",
+		description:
+			"Prepare the subagent call for gsd-phase-researcher to produce a phase RESEARCH.md.",
 		parameters: Type.Object({
-			repoPath: Type.String({ description: "Path to the repo to research (absolute or relative to session cwd)" }),
-			outputPath: Type.String({ description: "Path for RESEARCH.md (absolute or relative to session cwd)" }),
-			scope: Type.Optional(Type.String({ description: "Optional scope description" })),
+			repoPath: Type.String({
+				description:
+					"Path to the repo to research (absolute or relative to session cwd)",
+			}),
+			outputPath: Type.String({
+				description: "Path for RESEARCH.md (absolute or relative to session cwd)",
+			}),
+			scope: Type.Optional(
+				Type.String({ description: "Optional scope description" }),
+			),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
-			const { repoPath, outputPath } = resolveAndEnsure(params.repoPath, params.outputPath, ctx);
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
 			const task = [
 				"Research this phase and write RESEARCH.md.",
 				``,
@@ -131,7 +177,12 @@ export default function (pi: ExtensionAPI) {
 				"Create parent directories with bash (mkdir -p) if needed.",
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
-			const call = buildSubagentCall("gsd-phase-researcher", "research-phase", task, outputPath);
+			const call = buildSubagentCall(
+				"gsd-phase-researcher",
+				"research-phase",
+				task,
+				outputPath,
+			);
 			return buildToolResult(call, outputPath, repoPath);
 		},
 	});
@@ -139,14 +190,31 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_plan",
 		label: "GSD Plan",
-		description: "Prepare the subagent call for gsd-planner to produce a PLAN.md from context and research.",
+		description:
+			"Prepare the subagent call for gsd-planner to produce a PLAN.md from context and research.",
 		parameters: Type.Object({
-			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
-			inputFiles: Type.String({ description: "Comma-separated list of files to read first, or 'auto'" }),
-			outputPath: Type.String({ description: "Path for PLAN.md (absolute or relative to session cwd)" }),
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+			inputFiles: Type.String({
+				description: "Comma-separated list of files to read first, or 'auto'",
+			}),
+			outputPath: Type.String({
+				description: "Path for PLAN.md (absolute or relative to session cwd)",
+			}),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
-			const { repoPath, outputPath } = resolveAndEnsure(params.repoPath, params.outputPath, ctx);
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
 			const task = [
 				"Create an executable plan and write PLAN.md.",
 				``,
@@ -159,7 +227,12 @@ export default function (pi: ExtensionAPI) {
 				"Create parent directories with bash (mkdir -p) if needed.",
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
-			const call = buildSubagentCall("gsd-planner", "plan-phase", task, outputPath);
+			const call = buildSubagentCall(
+				"gsd-planner",
+				"plan-phase",
+				task,
+				outputPath,
+			);
 			return buildToolResult(call, outputPath, repoPath);
 		},
 	});
@@ -167,14 +240,32 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_execute",
 		label: "GSD Execute",
-		description: "Prepare the subagent call for gsd-executor to implement a PLAN.md and produce SUMMARY.md.",
+		description:
+			"Prepare the subagent call for gsd-executor to implement a PLAN.md and produce SUMMARY.md.",
 		parameters: Type.Object({
-			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
-			planPath: Type.String({ description: "Path to the PLAN.md file (absolute or relative to session cwd)" }),
-			outputPath: Type.String({ description: "Path for SUMMARY.md (absolute or relative to session cwd)" }),
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+			planPath: Type.String({
+				description:
+					"Path to the PLAN.md file (absolute or relative to session cwd)",
+			}),
+			outputPath: Type.String({
+				description: "Path for SUMMARY.md (absolute or relative to session cwd)",
+			}),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
-			const { repoPath, outputPath } = resolveAndEnsure(params.repoPath, params.outputPath, ctx);
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
 			const planPath = resolveAbsolutePath(params.planPath, ctx.cwd);
 			const task = [
 				"Execute the plan and write SUMMARY.md.",
@@ -187,7 +278,12 @@ export default function (pi: ExtensionAPI) {
 				"Create parent directories with bash (mkdir -p) if needed.",
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
-			const call = buildSubagentCall("gsd-executor", "execute-plan", task, outputPath);
+			const call = buildSubagentCall(
+				"gsd-executor",
+				"execute-plan",
+				task,
+				outputPath,
+			);
 			return buildToolResult(call, outputPath, repoPath);
 		},
 	});
@@ -195,14 +291,33 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_verify",
 		label: "GSD Verify",
-		description: "Prepare the subagent call for gsd-verifier to produce VERIFICATION.md for a completed phase.",
+		description:
+			"Prepare the subagent call for gsd-verifier to produce VERIFICATION.md for a completed phase.",
 		parameters: Type.Object({
-			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
-			phaseDir: Type.String({ description: "Path to the phase directory (absolute or relative to session cwd)" }),
-			outputPath: Type.String({ description: "Path for VERIFICATION.md (absolute or relative to session cwd)" }),
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+			phaseDir: Type.String({
+				description:
+					"Path to the phase directory (absolute or relative to session cwd)",
+			}),
+			outputPath: Type.String({
+				description:
+					"Path for VERIFICATION.md (absolute or relative to session cwd)",
+			}),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
-			const { repoPath, outputPath } = resolveAndEnsure(params.repoPath, params.outputPath, ctx);
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
 			const phaseDir = resolveAbsolutePath(params.phaseDir, ctx.cwd);
 			const task = [
 				"Verify the phase and write VERIFICATION.md.",
@@ -216,7 +331,12 @@ export default function (pi: ExtensionAPI) {
 				"Create parent directories with bash (mkdir -p) if needed.",
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
-			const call = buildSubagentCall("gsd-verifier", "verify-phase", task, outputPath);
+			const call = buildSubagentCall(
+				"gsd-verifier",
+				"verify-phase",
+				task,
+				outputPath,
+			);
 			return buildToolResult(call, outputPath, repoPath);
 		},
 	});
@@ -224,14 +344,33 @@ export default function (pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_security_audit",
 		label: "GSD Security Audit",
-		description: "Prepare the subagent call for gsd-security-audit to produce SECURITY-AUDIT.md for a phase.",
+		description:
+			"Prepare the subagent call for gsd-security-audit to produce SECURITY-AUDIT.md for a phase.",
 		parameters: Type.Object({
-			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
-			phaseDir: Type.String({ description: "Path to the phase directory (absolute or relative to session cwd)" }),
-			outputPath: Type.String({ description: "Path for SECURITY-AUDIT.md (absolute or relative to session cwd)" }),
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+			phaseDir: Type.String({
+				description:
+					"Path to the phase directory (absolute or relative to session cwd)",
+			}),
+			outputPath: Type.String({
+				description:
+					"Path for SECURITY-AUDIT.md (absolute or relative to session cwd)",
+			}),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
-			const { repoPath, outputPath } = resolveAndEnsure(params.repoPath, params.outputPath, ctx);
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
 			const phaseDir = resolveAbsolutePath(params.phaseDir, ctx.cwd);
 			const task = [
 				"Run a security audit for this phase and write SECURITY-AUDIT.md.",
@@ -245,7 +384,12 @@ export default function (pi: ExtensionAPI) {
 				"Create parent directories with bash (mkdir -p) if needed.",
 				"Verify the file exists with ls -la before returning.",
 			].join("\n");
-			const call = buildSubagentCall("gsd-security-audit", "security-audit", task, outputPath);
+			const call = buildSubagentCall(
+				"gsd-security-audit",
+				"security-audit",
+				task,
+				outputPath,
+			);
 			return buildToolResult(call, outputPath, repoPath);
 		},
 	});
