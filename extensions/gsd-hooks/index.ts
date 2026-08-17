@@ -16,7 +16,12 @@ import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { execSync } from "node:child_process";
-import { findGsdRoot, parseStateMd, formatStatus, type GsdState } from "./status";
+import {
+  findGsdRoot,
+  parseStateMd,
+  formatStatus,
+  type GsdState,
+} from "./status";
 
 // ── Config ──────────────────────────────────────────────────────────────────
 

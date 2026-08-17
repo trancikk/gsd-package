@@ -66,7 +66,11 @@ console.log("--- status parsing tests ---");
 const parsed = parseStateMd(sampleState);
 assertEqual(parsed.milestone, "v1.0", "parses milestone");
 assertEqual(parsed.activePhase, "03", "parses active_phase");
-assertEqual(parsed.currentPhaseName, "Auth refactor", "parses current_phase_name");
+assertEqual(
+	parsed.currentPhaseName,
+	"Auth refactor",
+	"parses current_phase_name",
+);
 assertEqual(parsed.currentPlan, "03-01", "parses current_plan");
 assertEqual(parsed.activeWorkstream, "WS-001", "parses active_workstream");
 assertEqual(parsed.status, "executing", "parses status");
@@ -99,7 +103,10 @@ progress:
 const idleFormatted = formatStatus(idleState);
 console.log("idle formatted:", idleFormatted);
 assertTrue(idleFormatted.includes("v2.0"), "idle includes milestone");
-assertTrue(idleFormatted.includes("next begin-phase 4"), "idle shows next action");
+assertTrue(
+	idleFormatted.includes("next begin-phase 4"),
+	"idle shows next action",
+);
 
 console.log("\n--- findGsdRoot tests ---");
 const tmp = path.join(process.cwd(), `.tmp-hooks-status-test-${Date.now()}`);
@@ -108,7 +115,11 @@ fs.writeFileSync(path.join(tmp, ".planning", "STATE.md"), sampleState, "utf8");
 const nested = path.join(tmp, "src", "components");
 fs.mkdirSync(nested, { recursive: true });
 assertEqual(findGsdRoot(nested), tmp, "finds GSD root from nested dir");
-assertEqual(findGsdRoot("/nonexistent/path/that/should/not/exist"), null, "returns null when no GSD root");
+assertEqual(
+	findGsdRoot("/nonexistent/path/that/should/not/exist"),
+	null,
+	"returns null when no GSD root",
+);
 fs.rmSync(tmp, { recursive: true, force: true });
 
 console.log("\nAll status tests passed.");
