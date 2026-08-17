@@ -17,12 +17,14 @@ A spec-driven development workflow adapted from GSD Core for pi's native subagen
 ## When to Use
 
 **Use when:**
+
 - Multi-file features or cross-cutting refactors
 - Work that spans multiple sessions
 - Complex domains requiring research before planning
 - Any task where context rot is a real risk
 
 **Skip when:**
+
 - Single-file fixes, typos, or trivial changes
 - Work that fits in one prompt + one agent turn
 - Exploratory/spike work with no clear spec
@@ -38,7 +40,7 @@ Init → Discuss → Plan → Execute → Verify → Ship → (repeat)
 This skill uses GSD-native agents registered at `~/.pi/agent/agents/gsd-*.md`. Each agent is a pi-subagent with GSD-specific behavior:
 
 | GSD Role | Agent Name | Tools | Thinking | Purpose |
-|----------|------------|-------|----------|---------|
+| ---------- | ------------ | ------- | ---------- | --------- |
 | **Researcher** | `gsd-phase-researcher` | read, grep, find, ls, bash, write, web_search, fetch_content, get_search_content | medium | Produces RESEARCH.md: domain analysis, stack, patterns, pitfalls |
 | **Planner** | `gsd-planner` | read, grep, find, ls, bash, write, web_search, fetch_content | high | Produces PLAN.md files: task breakdown, waves, must_haves |
 | **Executor** | `gsd-executor` | read, grep, find, ls, bash, edit, write | high | Executes plans: atomic commits, deviation handling |
@@ -69,7 +71,8 @@ This skill uses GSD-native agents registered at `~/.pi/agent/agents/gsd-*.md`. E
 ├── gsd-ui-checker.md
 ├── gsd-ui-auditor.md
 ├── gsd-capture.md
-└── gsd-learnings.md
+├── gsd-learnings.md
+└── gsd-workstream.md
 ```
 
 The table above lists the five core loop agents; the full set includes quick work, milestone management, session management, quality/review, knowledge capture, and UI agents listed under *Operations beyond the core phase loop* below.
@@ -85,6 +88,7 @@ The table above lists the five core loop agents; the full set includes quick wor
 ├── REQUIREMENTS.md                     # Numbered acceptance criteria (REQ-IDs)
 ├── STATE.md                            # Living position tracker (read this FIRST)
 ├── BACKLOG.md                          # Pending ideas, todos, tech debt
+├── WORKSTREAMS.md                      # Parallel feature workstreams (Git branches)
 ├── CONVENTIONS.md                      # GSD workflow conventions for this project
 ├── MILESTONES.md                       # Archived milestone summaries
 ├── LEARNINGS.md                        # Cross-phase learnings
@@ -119,7 +123,7 @@ Templates for all artifacts are in the `templates/` directory of this skill.
 GSD ships pi prompt templates in `prompts/` and typed tools via the `gsd-commands` extension. Either avoids hand-rolling workflow scripts and supplies the correct `output` + `gate` pattern.
 
 | Command / Tool | Arguments | Purpose |
-|----------------|-----------|---------|
+| ---------------- | ----------- | --------- |
 | `/gsd-onboard` / `gsd_onboard` | `<repo-path> <output-path>` | Produce MAPPING.md for an existing codebase |
 | `/gsd-research` / `gsd_research` | `<repo-path> <output-path> [scope]` | Produce RESEARCH.md for a phase |
 | `/gsd-plan` / `gsd_plan` | `<repo-path> <context-files> <output-path>` | Produce PLAN.md from context/research |
@@ -175,10 +179,11 @@ Operations beyond the core phase loop are invoked by spawning the corresponding 
 ### Quality & review
 
 | Command | Agent | When to use |
-|---------|-------|-------------|
+| --------- | ------- | ------------- |
 | `code-review` | `gsd-code-review` | Review implementation against plan + requirements |
 | `security-audit` | `gsd-security-audit` | OWASP ASVS scan + threat model |
 | `backlog` | `gsd-backlog` | Interactive backlog triage |
+| `workstream` | `gsd-workstream` | Create, switch, pause, resume, merge, close parallel feature branches |
 | `retrospective` | `gsd-retrospective` | Post-phase what went well / what didn't |
 | `ui-research` | `gsd-ui-researcher` | Produce UI-SPEC.md design contract (interactive) |
 | `ui-check` | `gsd-ui-checker` | Validate UI-SPEC.md against 6 dimensions |
@@ -292,6 +297,7 @@ Write the map to: .planning/codebase/MAPPING.md`,
 #### Step 0b-ii: Validate Map with User
 
 Present the mapping to the user. Ask:
+
 - Is the overview accurate?
 - Anything missing or wrong about the architecture?
 - What are the top priorities for this project right now?
@@ -372,6 +378,7 @@ Read `.planning/ROADMAP.md` for phase goal, requirements, and success criteria.
 Read prior phase CONTEXT.md files (up to 3 back) for accumulated decisions.
 
 Identify gray areas in these categories:
+
 - **Architecture & Approach:** Library choices, patterns, integration strategy
 - **Data & State:** Data model changes, state management, migration
 - **UI/UX:** Layout, interaction patterns, empty/loading/error states
@@ -411,6 +418,7 @@ For each selected area, use Socratic questioning with `ask_user_question`:
 - Capture each decision with a unique ID: **D-<NN>-MM**
 
 **Interaction style:**
+
 - Conversational, not interrogative — you're a thinking partner
 - Recommend defaults — user can override
 - Move fast — state obvious decisions and move on
@@ -421,6 +429,7 @@ For each selected area, use Socratic questioning with `ask_user_question`:
 **No scope creep.** The phase boundary from ROADMAP.md is FIXED. Discussion clarifies HOW to implement what's scoped, never WHETHER to add new capabilities.
 
 When user suggests scope creep:
+
 ```
 "[Feature X] would be a new capability — that's its own phase.
 Want me to note it for the roadmap backlog?
@@ -484,6 +493,7 @@ Write RESEARCH.md to: .planning/phases/<NN>-<slug>/<NN>-RESEARCH.md`,
 ```
 
 **`gsd-phase-researcher` receives (context isolation):**
+
 - Phase goal and domain from ROADMAP.md
 - Locked decisions from CONTEXT.md
 - Canonical references from CONTEXT.md (files to focus on)
@@ -572,6 +582,7 @@ Check all 9 dimensions:
 ### 2d: Wave Analysis
 
 Analyze PLAN.md files to determine execution waves:
+
 - Plans with no `depends_on` → Wave 1
 - Plans depending only on Wave 1 plans → Wave 2
 - Etc.
@@ -687,6 +698,7 @@ Read these files first:
 ### Executor Context (per plan)
 
 Each `gsd-executor` receives ONLY:
+
 - The specific PLAN.md it's implementing
 - Phase CONTEXT.md (locked decisions)
 - Phase RESEARCH.md (if available)
@@ -758,6 +770,7 @@ Write VERIFICATION.md to: .planning/phases/<NN>-<slug>/<NN>-VERIFICATION.md`,
 ### Verifier Context
 
 The `gsd-verifier` receives:
+
 - Phase goal from ROADMAP.md
 - CONTEXT.md (decisions to check compliance)
 - All PLAN.md files (must_haves to verify)
@@ -779,6 +792,7 @@ The `gsd-verifier` reads actual code to verify claims, produces VERIFICATION.md 
 Before shipping, run a security audit for phases touching authentication, authorization, cryptography, PII, payments, or privilege boundaries.
 
 **When to run:**
+
 - Phase goal or requirements mention auth, crypto, users, roles, permissions, files, uploads, or external APIs
 - `gsd-plan-checker` flagged Dimension 10 (Security Coverage)
 - Any PLAN.md `must_haves` include security truths
@@ -802,10 +816,12 @@ Read ROADMAP.md, CONTEXT.md, all PLAN.md and SUMMARY.md files, then scan the act
 ```
 
 Or use the prompt template / extension tool:
+
 - `/gsd-security-audit <repo-path> <phase-dir> <output-path>`
 - `gsd_security_audit({ repoPath, phaseDir, outputPath })`
 
 **Handle findings:**
+
 - **CRITICAL** → loop back to Execute; fixes must ship with the phase
 - **HIGH** → user decision: fix now, accept risk, or spawn follow-up phase
 - **MEDIUM / LOW** → capture in BACKLOG.md for prioritization
@@ -889,12 +905,14 @@ runs.run('research-phase', {
 ```
 
 **Gate rules:**
+
 - `gate` is a single shell command run on the host after the subagent completes
 - If the command exits non-zero, the gate fails — the run is marked as not accepted
 - Cannot be combined with `acceptance` — use one or the other
 - For content verification (non-empty file), use: `test -s <path>` (checks file exists AND has size > 0)
 - Rejected on retained resume items
 - **Cross-platform:** Unix `test -s`/`test -f` do not work on Windows hosts. For portable gates use Node, e.g.:
+
   ```javascript
   gate: 'node -e "const fs=require(\'fs\'); const p=process.argv[1]; try { const s=fs.statSync(p); process.exit(s.isFile() && s.size>0 ? 0 : 1); } catch (e) { process.exit(1); }" "<path>"'
   ```
@@ -929,7 +947,7 @@ const waitResult = await subagent_wait({ id: research.asyncId });
 ### Which layers to use?
 
 | Phase step | Gate | Acceptance | Post-check |
-|------------|------|------------|------------|
+| ------------ | ------ | ------------ | ------------ |
 | Research | ✅ `test -f` | Optional | Recommended |
 | Plan | ✅ `test -f` | Optional | Recommended |
 | Execute | ✅ `test -f` per SUMMARY | `changed-files` | Recommended |
@@ -940,6 +958,7 @@ const waitResult = await subagent_wait({ id: research.asyncId });
 ### Agent prompt hardening (built-in)
 
 All artifact-producing agents now include a `## CRITICAL: Artifact Writing — MANDATORY` section in their system prompt that instructs them to:
+
 1. Create the file as first action (placeholder header)
 2. Write complete content as last action
 3. Verify with `ls -la` after writing
@@ -958,7 +977,7 @@ This is prevention — gates and post-checks are the safety net.
 If you don't want to use the GSD-specific agents, this skill also works with pi-subagents' builtins:
 
 | GSD Role | pi-subagent builtin | Notes |
-|----------|--------------------|-------|
+| ---------- | -------------------- | ------- |
 | Researcher | `scout` (codebase) + `researcher` (web) | Run in parallel |
 | Planner | `oracle` | Advisory — doesn't create PLAN.md, only validates |
 | Executor | `worker` | Direct replacement for `gsd-executor` |
@@ -1078,11 +1097,11 @@ gate: 'test -s /home/user/project/.planning/RESEARCH.md'
 
 ### ✅ Available now
 
-Phase loop (Discuss→Plan→Execute→Verify→Ship), interactive discuss with locked decisions, wave-based parallelism, fresh-context subagents, quick tasks, structured debugging, milestone completion/summary, pause/resume, codebase onboarding, context monitoring, phase boundary reminders, commit validation, status display, prompt guard, read-injection scanner, workflow guard, code review, security audit, retrospective, capture, learnings, autonomous execution, UI research, UI checking, UI audit.
+Phase loop (Discuss→Plan→Execute→Verify→Ship), interactive discuss with locked decisions, wave-based parallelism, fresh-context subagents, quick tasks, structured debugging, milestone completion/summary, pause/resume, codebase onboarding, context monitoring, phase boundary reminders, commit validation, status display, prompt guard, read-injection scanner, workflow guard, code review, security audit, retrospective, capture, learnings, workstreams, autonomous execution, UI research, UI checking, UI audit.
 
 ### ❌ Not yet available
 
-UAT audit, workspace/workstream management, threads, broken windows ledger, graphify knowledge graph, intel queries, MVP/walking skeleton modes, cross-AI review convergence, decimal phases, effort estimation, config hot-reload, injection scanning, prompt/read/workflow guards, update checks, roadmap editing, plan insertion/removal.
+UAT audit, workspace management, threads, broken windows ledger, graphify knowledge graph, intel queries, MVP/walking skeleton modes, cross-AI review convergence, decimal phases, effort estimation, config hot-reload, injection scanning, prompt/read/workflow guards, update checks, roadmap editing, plan insertion/removal.
 
 ### 🔄 Partial
 

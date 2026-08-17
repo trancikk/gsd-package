@@ -18,6 +18,7 @@ progress:
 current_phase: null
 current_phase_name: null
 current_plan: null
+active_workstream: null
 last_updated: "<TIMESTAMP>"
 last_activity: "<DATE>"
 stopped_at: "Project initialized"

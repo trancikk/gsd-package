@@ -71,12 +71,13 @@ The onboarding process:
 
 ### Prompt commands
 
-GSD registers pi prompt templates (`/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`, `/gsd-security-audit`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Use them instead of hand-rolling workflow scripts.
+GSD registers pi prompt templates (`/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`, `/gsd-security-audit`, `/gsd-workstream`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Use them instead of hand-rolling workflow scripts.
 
-```
+```text
 /gsd-onboard C:/Sources/my-project C:/Sources/my-project/.planning/codebase/MAPPING.md
 /gsd-research C:/Sources/my-project C:/Sources/my-project/.planning/phases/01-foo/01-RESEARCH.md
 /gsd-security-audit C:/Sources/my-project C:/Sources/my-project/.planning/phases/03-auth C:/Sources/my-project/.planning/phases/03-auth/03-SECURITY-AUDIT.md
+/gsd-workstream C:/Sources/my-project
 ```
 
 Use forward slashes in paths. See `prompts/` in this package.
@@ -86,6 +87,7 @@ Use forward slashes in paths. See `prompts/` in this package.
 For even more reliability, the `gsd-commands` extension registers typed tools the agent can call directly:
 
 **Orchestration tools** (return a prepared `subagent()` call):
+
 - `gsd_onboard({ repoPath, outputPath })`
 - `gsd_research({ repoPath, outputPath, scope? })`
 - `gsd_plan({ repoPath, inputFiles, outputPath })`
@@ -96,13 +98,19 @@ For even more reliability, the `gsd-commands` extension registers typed tools th
 Each tool validates the inputs, resolves absolute paths, creates the output directory, and returns the exact `subagent({ workflowScript: ... })` call. The orchestrator agent then invokes it directly and waits for completion, removing hand-rolled workflow-script construction and copy-paste.
 
 **State-management tools** (host-side file operations on `.planning/STATE.md`):
+
 - `gsd_state_load({ repoPath })` — returns parsed frontmatter + body
 - `gsd_state_update({ repoPath, field, value })` — atomic dot-notation frontmatter update
 - `gsd_state_advance({ repoPath, operation, phase, plan?, phaseName?, nextAction? })` — phase/plan lifecycle transitions (`begin-phase`, `complete-plan`, `complete-phase`)
 - `gsd_state_progress({ repoPath })` — recalculate `progress.*` from `.planning/phases/`
 
 **Backlog tool** (host-side file operations on `.planning/BACKLOG.md`):
+
 - `gsd_backlog({ repoPath, operation, ... })` — list / add / update / close / promote backlog items
+
+**Workstream tool** (host-side file operations on `.planning/WORKSTREAMS.md` + Git branch management):
+
+- `gsd_workstream({ repoPath, operation, ... })` — list / add / update / switch / pause / resume / merge / close parallel feature branches
 
 These run directly in the extension (not in a subagent), atomically rewrite the target file, and return JSON. They eliminate the formatting drift and missed-updates that come from asking agents to `write` the whole file.
 
@@ -123,6 +131,7 @@ These run directly in the extension (not in a subagent), atomically rewrite the 
 ├── CONVENTIONS.md                      # GSD workflow conventions for this project
 ├── STATE.md                            # Living position tracker (read this FIRST)
 ├── BACKLOG.md                          # Pending ideas, todos, tech debt
+├── WORKSTREAMS.md                      # Parallel feature workstreams (Git branches)
 ├── config.json                         # Workflow configuration
 └── phases/
     └── <NN>-<slug>/                    # One directory per phase
@@ -141,7 +150,7 @@ Each agent is a focused pi-subagent with its own system prompt and tool allowlis
 #### Phase loop
 
 | Agent | Role | What it does |
-|-------|------|-------------|
+| ------- | ------ | ------------- |
 | `gsd-discuss` | Interactive decision capture | Identifies gray areas, presents to user via `ask_user_question`, deep-dives each with Socratic questioning, produces CONTEXT.md with locked decisions |
 | `gsd-phase-researcher` | Researches the phase domain | Produces RESEARCH.md: standard stack, patterns, pitfalls, package legitimacy audit, architecture responsibility map |
 | `gsd-planner` | Creates executable plans | Produces PLAN.md files with XML-structured tasks, wave-based dependency ordering, must_haves for verification |
@@ -170,12 +179,18 @@ Each agent is a focused pi-subagent with its own system prompt and tool allowlis
 | `gsd-pause` | Save session state | Write HANDOFF.json + .continue-here.md for later resumption |
 | `gsd-resume` | Restore session | Read handoff state and resume work |
 
+#### Workstream management
+
+| Agent | Role | When to use |
+|-------|------|-------------|
+| `gsd-workstream` | Manage parallel feature branches | Create, switch, pause, resume, merge, close workstreams |
+
 ### The extension (hooks)
 
 GSD's hook behavior implemented as a pi extension using the event system:
 
 | Hook | Event | Purpose |
-|------|-------|---------|
+| ------ | ------- | --------- |
 | Context monitor | `turn_end` | Warns at 35% remaining (wrap up) and 25% remaining (stop now) |
 | Phase boundary | `tool_result` | Reminds to update STATE.md when `.planning/` files are modified |
 | Commit validation | `tool_call` | Warns when `git commit` messages don't follow Conventional Commits |
@@ -201,6 +216,7 @@ depends_on: ["01-01"]
 ```
 
 The skill groups plans into waves:
+
 - **Wave 1**: plans with no dependencies → run in parallel
 - **Wave 2**: plans depending on Wave 1 → run after Wave 1 completes
 - etc.
@@ -228,6 +244,7 @@ v2.0 [██░░░░░░░░] 20% · Phase 4.5 executing
 ```
 
 Lifecycle scenes:
+
 - `active_phase` set → "Phase 4.5 executing"
 - Idle + `next_action` → "next execute-phase 4.5"
 - `percent: 100` → "milestone complete"
@@ -235,12 +252,14 @@ Lifecycle scenes:
 ## When to use
 
 **Use when:**
+
 - Multi-file features or cross-cutting refactors
 - Work that spans multiple sessions
 - Complex domains requiring research before planning
 - Any task where context rot is a real risk
 
 **Skip when:**
+
 - Single-file fixes, typles, or trivial changes
 - Work that fits in one prompt + one agent turn
 - Exploratory/spike work with no clear spec
@@ -248,7 +267,7 @@ Lifecycle scenes:
 ## Comparison with upstream GSD Core
 
 | Feature | GSD Core (Claude Code) | GSD Core for pi |
-|---------|----------------------|-----------------|
+| --------- | ---------------------- | ----------------- |
 | Agents | `agents/*.md` | `~/.pi/agent/agents/gsd-*.md` |
 | Hooks | `hooks/*.js` (Claude Code hooks API) | `extensions/gsd-hooks/index.ts` (pi events) |
 | State | `.planning/` + `STATE.md` | Same |
@@ -285,7 +304,7 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 ### ✅ Implemented
 
 | Feature | pi implementation |
-|---------|------------------|
+| --------- | ------------------ |
 | Phase loop (Discuss→Plan→Execute→Verify→Ship) | `gsd-phase-loop` skill |
 | Interactive discuss with user decisions | `gsd-discuss` agent + `ask_user_question` |
 | Fresh-context subagents per step | All agents use `context: 'fresh'` |
@@ -314,6 +333,7 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | Autonomous execution | `gsd-autonomous` agent — full loop without human intervention |
 | Capture | `gsd-capture` agent — ideas, todos, decisions from conversation |
 | Backlog management | `gsd_backlog` tool + `gsd-backlog` agent — triage and promote items |
+| Workstreams | `gsd_workstream` tool + `gsd-workstream` agent — parallel feature branches |
 | Learnings | `gsd-learnings` agent — cross-phase learning accumulation |
 | Retrospective | `gsd-retrospective` agent — post-phase what went well / what didn't |
 | UI research | `gsd-ui-researcher` agent — interactive UI-SPEC.md design contract |
@@ -323,11 +343,10 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 ### ❌ Not yet implemented
 
 | Feature | GSD Command | Notes |
-|---------|-------------|-------|
+| --------- | ------------- | ------- |
 | **Audit UAT** | `/gsd-audit-uat` | Cross-phase UAT audit |
 | **Audit milestone** | `/gsd-audit-milestone` | Milestone definition-of-done verification |
 | **Workspace management** | `/gsd-workspace` | Multi-repo, worktree isolation |
-| **Workstreams** | `gsd-tools workstream` | Parallel feature work on same repo |
 | **Threads** | `/gsd-thread` | Discussion threads |
 | **Broken windows** | `gsd-tools windows` | Tech debt tracking ledger |
 | **Graphify** | `gsd-tools graphify` | Knowledge graph for codebase intelligence |
@@ -364,7 +383,7 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 ### 🔄 Partial / workarounds
 
 | Feature | Status | Workaround |
-|---------|--------|------------|
+| --------- | -------- | ------------ |
 | Plan validation | Partial | `gsd-plan-checker` covers 9 dimensions but doesn't auto-revise |
 | Nyquist validation | Partial | Architecture section exists in RESEARCH.md but no enforcement |
 | TDD mode | Partial | `gsd-executor` supports TDD tasks but no dedicated mode |
