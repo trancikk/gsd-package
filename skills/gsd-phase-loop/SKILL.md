@@ -567,7 +567,12 @@ Analyze PLAN.md files to determine execution waves:
 - Plans depending only on Wave 1 plans → Wave 2
 - Etc.
 
-Store wave assignments in STATE.md for execute-phase.
+Store wave assignments in STATE.md for execute-phase:
+
+```javascript
+await gsd_state_update({ repoPath: '<repo>', field: 'current_plan', value: null });
+await gsd_state_advance({ repoPath: '<repo>', operation: 'begin-phase', phase: <NN>, phaseName: '<slug>', nextAction: 'execute-phase' });
+```
 
 ---
 
@@ -686,7 +691,15 @@ Each `gsd-executor` does NOT receive: full codebase scan, other plans, planning 
 1. Review all SUMMARY.md files from the wave
 2. Run type check / lint / tests if configured
 3. If failures → spawn `gsd-verifier` for diagnosis, then `gsd-executor` for fix
-4. Update STATE.md with completed plans
+4. Update STATE.md with completed plans and recalculate progress:
+
+   ```javascript
+   // For each completed plan:
+   await gsd_state_advance({ repoPath: '<repo>', operation: 'complete-plan', phase: <NN>, plan: <PP> });
+   // Then refresh progress counters from disk:
+   await gsd_state_progress({ repoPath: '<repo>' });
+   ```
+
 5. Proceed to next wave
 
 ---
@@ -761,10 +774,15 @@ The `gsd-verifier` reads actual code to verify claims, produces VERIFICATION.md 
    - Changes from SUMMARY.md files
    - Requirements addressed
    - Key decisions from CONTEXT.md
-2. Update STATE.md:
-   - Mark phase complete
-   - Advance to next phase
-   - Update progress metrics
+2. Update STATE.md via host-side tools:
+
+   ```javascript
+   // Mark phase complete and advance next_action:
+   await gsd_state_advance({ repoPath: '<repo>', operation: 'complete-phase', phase: <NN> });
+   // Recalculate progress from disk:
+   await gsd_state_progress({ repoPath: '<repo>' });
+   ```
+
 3. Archive phase artifacts (commit .planning/ to git)
 
 ---
@@ -802,7 +820,7 @@ The `gsd-commands` extension provides host-side tools for reading and mutating `
 - `gsd_state_advance({ repoPath, operation, phase, ... })` — `begin-phase`, `complete-plan`, `complete-phase`
 - `gsd_state_progress({ repoPath })` — recalculate `progress.*` from disk
 
-Use these in the orchestrator layer for reliable state transitions. Agents reading `STATE.md` still use the `read` tool; agents updating it should prefer these tools over `write` to avoid formatting drift.
+Use these in the **orchestrator layer** for reliable state transitions. Agents reading `STATE.md` still use the `read` tool. Subagents generally should **not** write `STATE.md`; report desired state changes back to the orchestrator so it can apply them with these tools. The special-purpose `gsd-milestone-complete`, `gsd-pause`, and `gsd-resume` agents may still write `STATE.md` directly, but they should make minimal, frontmatter-only updates.
 ```
 
 ## Artifact Integrity — Preventing Empty Artifacts

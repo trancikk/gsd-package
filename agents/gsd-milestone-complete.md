@@ -73,13 +73,27 @@ Append to `.planning/MILESTONES.md`:
 
 ### 4. Update STATE.md
 
+Use the `write` tool to rewrite `.planning/STATE.md` with updated frontmatter. Preserve all existing fields; only change these:
+
 ```yaml
 status: "[version] milestone complete"
 active_phase: null
+current_phase: null
+current_phase_name: null
+current_plan: null
 next_action: null
 next_phases: null
-percent: 100
+progress:
+  total_phases: [N]
+  completed_phases: [N]
+  total_plans: [N]
+  completed_plans: [N]
+  percent: 100
+stopped_at: "Milestone [version] complete"
+last_activity: "[YYYY-MM-DD]"
 ```
+
+> If the orchestrator already applied these changes via `gsd_state_advance` / `gsd_state_progress` before spawning you, verify them with `read` and skip this step.
 
 ### 5. Git Tag
 

@@ -48,7 +48,16 @@ Based on the stage:
 - **verify**: Re-load VERIFICATION.md, continue verification
 - **ship**: Resume shipping process
 
-Update STATE.md to clear `paused_at` and restore active status.
+Use the `write` tool to update `.planning/STATE.md` frontmatter. Preserve all existing fields; only change these:
+
+```yaml
+status: active
+paused_at: null
+stopped_at: "Session resumed"
+last_activity: "<YYYY-MM-DD>"
+```
+
+> If the orchestrator already applied these changes via `gsd_state_update` before spawning you, verify them with `read` and skip this step.
 
 ## Output
 

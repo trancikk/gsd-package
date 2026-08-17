@@ -81,7 +81,16 @@ Create `.planning/phases/<NN>-<slug>/.continue-here.md` with human-readable resu
 
 ### 4. Update STATE.md
 
-Set `paused_at` field and update status to `paused`.
+Use the `write` tool to update `.planning/STATE.md` frontmatter. Preserve all existing fields; only change these:
+
+```yaml
+status: paused
+paused_at: "<ISO timestamp>"
+stopped_at: "Session paused"
+last_activity: "<YYYY-MM-DD>"
+```
+
+> If the orchestrator already applied these changes via `gsd_state_update` before spawning you, verify them with `read` and skip this step.
 
 ## Output
 

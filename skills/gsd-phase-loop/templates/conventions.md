@@ -95,7 +95,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
 ## Workflow Rules
 
 1. **Read `STATE.md` first** every session.
-2. **Honor locked decisions** (`D-<NN>-MM` in `CONTEXT.md`) exactly; never silently override them.
+2. **Use state tools for orchestrator-level STATE.md updates**: `gsd_state_update`, `gsd_state_advance`, `gsd_state_progress`. Avoid rewriting the whole file for small changes.
+3. **Honor locked decisions** (`D-<NN>-MM` in `CONTEXT.md`) exactly; never silently override them.
 3. **Deferred ideas** never appear in plans.
 4. **Wave order is fixed:** do not run a plan before its `depends_on` plans are complete.
 5. **Every plan must map to at least one `REQ-XX`.**
