@@ -28,17 +28,21 @@
 - **Estimated scope:** Medium
 - **Status:** Completed
 
-### Phase 3: Stabilization and quality gates
+### Phase 3: Architecture rework & stabilization
 
 - **Goal:** Add automated testing, typechecking, linting, and CI so the package can be shipped and maintained safely.
-- **Requirements:** REQ-06
+- **Requirements:** REQ-06, REQ-07, REQ-08, REQ-09, REQ-10
 - **Success criteria:**
+  - Shared `.planning/` registry module exists and state/backlog/workstream tools use it.
+  - `gsd-hooks` is split into focused modules.
+  - `gsd_next_action` tool returns structured suggestions for every STATE.md status.
+  - Three skill variants (`gsd-quick-start`, `gsd-decision-helper`, `gsd-phase-loop`) cross-link and reference shared docs.
   - `npm test`, `npm run typecheck`, and `npm run lint` exist and pass.
   - GitHub Actions (or equivalent) runs the checks on every PR.
   - `gsd-resolve.sh` is deleted or moved to a `legacy/` directory.
 - **Depends on:** Phase 2
-- **Estimated scope:** Medium
-- **Status:** Not Started
+- **Estimated scope:** Large
+- **Status:** In Progress
 
 ---
 *Last updated: 2026-08-19*

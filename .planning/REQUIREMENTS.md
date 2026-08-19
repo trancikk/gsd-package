@@ -61,3 +61,39 @@
   - CI workflow runs tests and typecheck on push/PR.
 - **Phase:** 3
 - **Status:** ☐ Open
+
+## REQ-07: Shared `.planning/` registry module
+- **Description:** Extract a single registry module that handles artifact load, save, partial update, and phase listing for `.planning/` files.
+- **Acceptance criteria:**
+  - `extensions/gsd-commands/registry.ts` exists with `load`, `save`, `updateField`, and `listPhases`.
+  - `state.ts`, `backlog.ts`, and `workstream.ts` use the registry internally.
+  - Public tool signatures and behaviors remain unchanged.
+- **Phase:** 3
+- **Status:** ☐ Open
+
+## REQ-08: Modular `gsd-hooks` extension
+- **Description:** Split the monolithic `extensions/gsd-hooks/index.ts` into focused internal modules while preserving registered hook behavior.
+- **Acceptance criteria:**
+  - Modules exist for context-guard, commit-guard, injection-guard, and status-renderer.
+  - `index.ts` only registers hooks.
+  - Existing `status.test.ts` passes.
+- **Phase:** 3
+- **Status:** ☐ Open
+
+## REQ-09: `gsd_next_action` FSM tool
+- **Description:** Add a pi tool that reads `STATE.md` and returns a structured suggestion of valid next actions without mutating state.
+- **Acceptance criteria:**
+  - `gsd_next_action({ repoPath })` returns `{ valid_actions, recommended_action, reason, missing_prerequisites }`.
+  - Tool is suggest-only and covers all `STATE.md` status values.
+  - Tool is registered in `extensions/gsd-commands/index.ts`.
+- **Phase:** 3
+- **Status:** ☐ Open
+
+## REQ-10: Skill family and references
+- **Description:** Replace the monolithic `gsd-phase-loop` skill with a focused skill family and inline reference links.
+- **Acceptance criteria:**
+  - `skills/gsd-quick-start/SKILL.md`, `skills/gsd-decision-helper/SKILL.md`, and rewritten `skills/gsd-phase-loop/SKILL.md` exist.
+  - `skills/gsd-phase-loop/references/` contains reusable reference fragments.
+  - Each skill variant cross-links to the others.
+- **Phase:** 3
+- **Status:** ☐ Open
