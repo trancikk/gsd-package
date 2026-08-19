@@ -352,6 +352,7 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | Deep-module design vocabulary | `codebase-design` skill — `/skill:codebase-design` (user-invoked) |
 | Build/sharpen domain model | `domain-modeling` skill — `/skill:domain-modeling` (user-invoked) |
 | Throwaway prototype for a design question | `prototype` skill — `/skill:prototype` (user-invoked) |
+| Agent authoring guide | `docs/AGENT-AUTHORING.md` — derived from `write-for-agents` |
 
 ### ❌ Not yet implemented
 

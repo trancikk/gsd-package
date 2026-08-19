@@ -238,9 +238,9 @@ Use **Approach B** for vocabulary/skills that should become part of agent behavi
 
 ### Phase 3 — Quality + documentation
 
-9. Create `AGENT-AUTHORING.md` from `write-for-agents`.
-10. Audit all agent prompts against `write-for-agents` principles.
-11. Add integration notes to `gsd-phase-loop/SKILL.md` and `README.md`.
+9. ✅ Create `AGENT-AUTHORING.md` from `write-for-agents`.
+10. Lightweight audit of agent prompts against `write-for-agents` principles; full audit is ongoing maintenance.
+11. ✅ Add integration notes to `README.md` and link authoring guide from workflow docs.
 
 ---
 
