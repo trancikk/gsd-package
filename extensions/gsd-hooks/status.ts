@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 
 export interface GsdState {
@@ -15,6 +15,17 @@ export interface GsdState {
 	phaseNum: string | null;
 	phaseTotal: string | null;
 	phaseName: string | null;
+}
+
+export function readGsdState(cwd: string): GsdState | null {
+	const root = findGsdRoot(cwd);
+	if (!root) return null;
+	try {
+		const content = readFileSync(join(root, ".planning", "STATE.md"), "utf8");
+		return parseStateMd(content);
+	} catch {
+		return null;
+	}
 }
 
 export function findGsdRoot(cwd: string): string | null {
