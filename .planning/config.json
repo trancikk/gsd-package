@@ -1,0 +1,27 @@
+{
+  "gsd_config_version": "1.0",
+  "project_code": null,
+  "context_window": 200000,
+  "granularity": "standard",
+  "workflow": {
+    "research_enabled": true,
+    "plan_checker_enabled": true,
+    "nyquist_validation": true,
+    "pattern_mapper": true,
+    "parallel_execution": true,
+    "auto_verify": true
+  },
+  "models": {
+    "orchestrator": null,
+    "researcher": null,
+    "planner": null,
+    "executor": null,
+    "verifier": null
+  },
+  "git": {
+    "auto_commit": true,
+    "branch_per_phase": false,
+    "commit_convention": "conventional"
+  },
+  "smart_zone_tokens": 100000
+}
