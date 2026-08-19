@@ -10,8 +10,8 @@
  *    each GSD phase agent. They do not mutate files.
  *
  * 2. **State-management tools** (`gsd_state_load`, `gsd_state_update`,
- *    `gsd_state_advance`, `gsd_state_progress`) — host-side file operations
- *    on `.planning/STATE.md`. They run directly in the extension and return
+ *    `gsd_state_advance`, `gsd_state_progress`, `gsd_next_action`) — host-side file operations
+ *    and read-only suggestions on `.planning/STATE.md`. They run directly in the extension and return
  *    JSON, avoiding the need for agents to drive a CLI.
  */
 import { Type } from "typebox";
@@ -28,6 +28,7 @@ import {
 import { registerStateTools } from "./state";
 import { registerBacklogTools } from "./backlog";
 import { registerWorkstreamTools } from "./workstream";
+import { registerNextActionTool } from "./next-action";
 
 interface ResolvedPaths {
 	repoPath: string;
@@ -63,7 +64,8 @@ function buildToolResult(
 	call: string,
 	outputPath: string,
 	repoPath: string,
-): AgentToolResult {
+): AgentToolResult<any> {
+	const payload = { call, outputPath, repoPath };
 	return {
 		content: [
 			{
@@ -85,6 +87,7 @@ function buildToolResult(
 				].join("\n"),
 			},
 		],
+		details: payload,
 	};
 }
 
@@ -109,7 +112,7 @@ export default function (pi: ExtensionAPI) {
 			_signal,
 			_onUpdate,
 			ctx,
-		): Promise<AgentToolResult> {
+		): Promise<AgentToolResult<any>> {
 			const { repoPath, outputPath } = resolveAndEnsure(
 				params.repoPath,
 				params.outputPath,
@@ -159,7 +162,7 @@ export default function (pi: ExtensionAPI) {
 			_signal,
 			_onUpdate,
 			ctx,
-		): Promise<AgentToolResult> {
+		): Promise<AgentToolResult<any>> {
 			const { repoPath, outputPath } = resolveAndEnsure(
 				params.repoPath,
 				params.outputPath,
@@ -209,7 +212,7 @@ export default function (pi: ExtensionAPI) {
 			_signal,
 			_onUpdate,
 			ctx,
-		): Promise<AgentToolResult> {
+		): Promise<AgentToolResult<any>> {
 			const { repoPath, outputPath } = resolveAndEnsure(
 				params.repoPath,
 				params.outputPath,
@@ -260,7 +263,7 @@ export default function (pi: ExtensionAPI) {
 			_signal,
 			_onUpdate,
 			ctx,
-		): Promise<AgentToolResult> {
+		): Promise<AgentToolResult<any>> {
 			const { repoPath, outputPath } = resolveAndEnsure(
 				params.repoPath,
 				params.outputPath,
@@ -312,7 +315,7 @@ export default function (pi: ExtensionAPI) {
 			_signal,
 			_onUpdate,
 			ctx,
-		): Promise<AgentToolResult> {
+		): Promise<AgentToolResult<any>> {
 			const { repoPath, outputPath } = resolveAndEnsure(
 				params.repoPath,
 				params.outputPath,
@@ -365,7 +368,7 @@ export default function (pi: ExtensionAPI) {
 			_signal,
 			_onUpdate,
 			ctx,
-		): Promise<AgentToolResult> {
+		): Promise<AgentToolResult<any>> {
 			const { repoPath, outputPath } = resolveAndEnsure(
 				params.repoPath,
 				params.outputPath,
@@ -419,7 +422,7 @@ export default function (pi: ExtensionAPI) {
 			_signal,
 			_onUpdate,
 			ctx,
-		): Promise<AgentToolResult> {
+		): Promise<AgentToolResult<any>> {
 			const { repoPath, outputPath } = resolveAndEnsure(
 				params.repoPath,
 				params.outputPath,
@@ -474,7 +477,7 @@ export default function (pi: ExtensionAPI) {
 			_signal,
 			_onUpdate,
 			ctx,
-		): Promise<AgentToolResult> {
+		): Promise<AgentToolResult<any>> {
 			const { repoPath, outputPath } = resolveAndEnsure(
 				params.repoPath,
 				params.outputPath,
@@ -504,4 +507,5 @@ export default function (pi: ExtensionAPI) {
 	registerStateTools(pi);
 	registerBacklogTools(pi);
 	registerWorkstreamTools(pi);
+	registerNextActionTool(pi);
 }

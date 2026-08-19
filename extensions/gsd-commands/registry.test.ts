@@ -7,6 +7,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { load, save, updateField, listPhases } from "./registry";
+import { determineNextAction } from "./next-action";
 
 const stateTemplate = `---
 gsd_state_version: '1.0'
@@ -109,6 +110,42 @@ async function withTempRepo(cb: (repoPath: string) => Promise<void>) {
 		assertEqual(phases[0].plans, 1, "listPhases counts plans");
 		assertEqual(phases[0].summaries, 1, "listPhases counts summaries");
 		assertEqual(phases[0].hasVerification, true, "listPhases detects verification");
+
+		console.log("\n--- gsd_next_action FSM tests ---");
+		const initializing = determineNextAction(repoPath);
+		assertEqual(initializing.valid_actions, ["discuss-phase"], "initializing suggests discuss-phase");
+		assertEqual(initializing.recommended_action, "discuss-phase", "initializing recommends discuss-phase");
+
+		updateField("state", repoPath, "status", "idle");
+		updateField("state", repoPath, "active_phase", null);
+		updateField("state", repoPath, "next_phases", []);
+		const idle = determineNextAction(repoPath);
+		assertTrue(idle.valid_actions.includes("begin-phase"), "idle allows begin-phase");
+		assertTrue(idle.valid_actions.includes("milestone-complete"), "idle allows milestone-complete");
+
+		updateField("state", repoPath, "status", "active");
+		updateField("state", repoPath, "active_phase", "01");
+		updateField("state", repoPath, "next_action", "discuss-phase");
+		const activeDiscuss = determineNextAction(repoPath);
+		assertTrue(activeDiscuss.valid_actions.includes("discuss-phase"), "active-discuss allows discuss-phase");
+		assertTrue(activeDiscuss.recommended_action === "plan-phase" || activeDiscuss.recommended_action === "discuss-phase", "active-discuss recommends a known action");
+
+		fs.writeFileSync(path.join(phaseDir, "01-CONTEXT.md"), "# context", "utf8");
+		updateField("state", repoPath, "next_action", "plan-phase");
+		const activePlan = determineNextAction(repoPath);
+		assertTrue(activePlan.valid_actions.includes("plan-phase"), "active-plan allows plan-phase");
+		assertEqual(activePlan.recommended_action, "plan-phase", "active-plan recommends plan-phase");
+
+		updateField("state", repoPath, "status", "executing");
+		updateField("state", repoPath, "current_plan", "01-01");
+		const executing = determineNextAction(repoPath);
+		assertTrue(executing.valid_actions.includes("execute-phase"), "executing allows execute-phase");
+		assertEqual(executing.recommended_action, "execute-phase", "executing recommends execute-phase");
+
+		updateField("state", repoPath, "status", "paused");
+		const paused = determineNextAction(repoPath);
+		assertTrue(paused.valid_actions.includes("resume"), "paused allows resume");
+		assertEqual(paused.recommended_action, "resume", "paused recommends resume");
 
 		console.log("\nAll registry tests passed.");
 	});
