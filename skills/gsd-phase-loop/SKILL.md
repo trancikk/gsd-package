@@ -160,7 +160,7 @@ Operations beyond the core phase loop are invoked by spawning the corresponding 
 | Command | Agent | When to use |
 |---------|-------|-------------|
 | `quick` | `gsd-quick` | Single-task fixes: typos, missing imports, small refactors |
-| `debug` | `gsd-debug` | Diagnose and fix: reproduce → isolate → fix → verify |
+| `debug` | `gsd-debug` | Disciplined 6-phase debugging: feedback loop → minimise → hypothesise → instrument → fix → verify |
 
 ### Milestone management
 
