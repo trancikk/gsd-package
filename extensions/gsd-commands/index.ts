@@ -501,58 +501,6 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
-	pi.registerTool({
-		name: "gsd_grill",
-		label: "GSD Grill",
-		description:
-			"Prepare the subagent call for gsd-grill to run a relentless round-based interview and produce GRILL.md.",
-		parameters: Type.Object({
-			repoPath: Type.String({
-				description:
-					"Path to the repo (absolute or relative to session cwd)",
-			}),
-			topic: Type.String({
-				description: "The plan, design, or decision to grill",
-			}),
-			outputPath: Type.String({
-				description:
-					"Path for GRILL.md (absolute or relative to session cwd)",
-			}),
-		}),
-		async execute(
-			_id,
-			params,
-			_signal,
-			_onUpdate,
-			ctx,
-		): Promise<AgentToolResult> {
-			const { repoPath, outputPath } = resolveAndEnsure(
-				params.repoPath,
-				params.outputPath,
-				ctx,
-			);
-			const task = [
-				"Run a relentless round-based interview to sharpen a plan, design, or decision. Write GRILL.md.",
-				``,
-				`Repo: ${repoPath}`,
-				`Topic: ${params.topic}`,
-				`Output (absolute path): ${outputPath}`,
-				``,
-				"Map the topic as a design tree, work the frontier in rounds, look up facts with tools instead of asking the user, and update CONTEXT.md/ADRs as terms resolve.",
-				"Write the complete GRILL.md to the absolute output path using the write tool.",
-				"Create parent directories with bash (mkdir -p) if needed.",
-				"Verify the file exists with ls -la before returning.",
-			].join("\n");
-			const call = buildSubagentCall(
-				"gsd-grill",
-				"grill-session",
-				task,
-				outputPath,
-			);
-			return buildToolResult(call, outputPath, repoPath);
-		},
-	});
-
 	registerStateTools(pi);
 	registerBacklogTools(pi);
 	registerWorkstreamTools(pi);

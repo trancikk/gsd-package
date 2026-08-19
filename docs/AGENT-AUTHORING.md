@@ -93,6 +93,18 @@ Agents run unattended. Avoid mandatory user checkpoints mid-workflow. Instead:
 
 If a skill being inlined has user checkpoints (e.g., "show the user before testing"), replace them with autonomous defaults and artifact audit trails.
 
+## Autonomy rule for subagent agents
+
+Agents that run as pi subagents **must not** ask the user questions or react to user confusion signals. Pi subagents do not have a direct user-interaction channel.
+
+- Do **not** include `ask_user_question` in the `tools:` frontmatter.
+- Do **not** include `## Confusion Recovery`, "re-pitch if the user says wait/what", or any "wait-what" handling.
+- Do **not** instruct the agent to "wait for user approval", "ask the user", or "interview the user".
+- For genuine blockers that need a human decision, use `contact_supervisor({ reason: "need_decision", message: "..." })`. The parent orchestrator will ask the user and reply.
+- Interactive protocols belong in parent-turn skills or slash commands, not in subagent prompts.
+
+Before declaring an agent complete, grep its prompt for `ask_user_question`, `Confusion Recovery`, `signals confusion`, `re-pitch`, `ask the user`, and `wait for the user's`. Remove every hit.
+
 ---
 
 ## Artifact discipline
@@ -133,3 +145,4 @@ Before adding or editing an agent, verify:
 - [ ] No-ops and restatements are removed.
 - [ ] Leading words are used consistently.
 - [ ] Skill-derived behaviour is properly inlined and attributed.
+- [ ] No user questions, confusion recovery, or wait-what handling in subagent prompts (only `contact_supervisor` for genuine blockers).

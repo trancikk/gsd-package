@@ -11,7 +11,7 @@ Pending items captured during discussions, reviews, and execution that are not y
 
 ## Open
 
-<!-- Add items here using the gsd_backlog tool or the gsd-backlog agent. -->
+<!-- Add items here using the gsd_backlog tool or the /skill:backlog-triage skill. -->
 
 ## In Progress
 

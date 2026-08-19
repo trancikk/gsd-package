@@ -71,13 +71,13 @@ The onboarding process:
 
 ### Prompt commands
 
-GSD registers pi prompt templates (`/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`, `/gsd-security-audit`, `/gsd-workstream`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Use them instead of hand-rolling workflow scripts.
+GSD registers pi prompt templates (`/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`, `/gsd-security-audit`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Interactive workflows are parent-turn skills (e.g., `/skill:workstream-manage`). Use them instead of hand-rolling workflow scripts.
 
 ```text
 /gsd-onboard C:/Sources/my-project C:/Sources/my-project/.planning/codebase/MAPPING.md
 /gsd-research C:/Sources/my-project C:/Sources/my-project/.planning/phases/01-foo/01-RESEARCH.md
 /gsd-security-audit C:/Sources/my-project C:/Sources/my-project/.planning/phases/03-auth C:/Sources/my-project/.planning/phases/03-auth/03-SECURITY-AUDIT.md
-/gsd-workstream C:/Sources/my-project
+/skill:workstream-manage
 ```
 
 Use forward slashes in paths. See `prompts/` in this package.
@@ -151,12 +151,23 @@ Each agent is a focused pi-subagent with its own system prompt and tool allowlis
 
 | Agent | Role | What it does |
 | ------- | ------ | ------------- |
-| `gsd-discuss` | Interactive decision capture | Identifies gray areas, presents to user via `ask_user_question`, deep-dives each with Socratic questioning, produces CONTEXT.md with locked decisions |
 | `gsd-phase-researcher` | Researches the phase domain | Produces RESEARCH.md: standard stack, patterns, pitfalls, package legitimacy audit, architecture responsibility map |
 | `gsd-planner` | Creates executable plans | Produces PLAN.md files with XML-structured tasks, wave-based dependency ordering, must_haves for verification |
 | `gsd-executor` | Executes a single plan | Reads PLAN.md, makes atomic commits per task, auto-fixes bugs (4 deviation rules), escalates unapproved decisions |
 | `gsd-verifier` | Verifies phase goal achievement | Adversarial goal-backward analysis: checks truths, artifacts (3 levels), key links, requirement coverage, anti-patterns |
 | `gsd-plan-checker` | Validates plans before execution | 9-dimension quality gate: requirement coverage, task correctness, dependency acyclicity, scope sanity, context compliance |
+
+#### Interactive parent-turn skills
+
+These are **not** background subagents. They run in the main assistant turn and use `ask_user_question`/`interview` to interact with the user.
+
+| Skill | Invocation | Purpose |
+|-------|------------|---------|
+| `discuss-phase` | `/skill:discuss-phase <phase>` | Capture implementation decisions → `CONTEXT.md` |
+| `backlog-triage` | `/skill:backlog-triage` | Review and manage `.planning/BACKLOG.md` |
+| `ui-phase` | `/skill:ui-phase [phase]` | Produce `UI-SPEC.md` design contract |
+| `workstream-manage` | `/skill:workstream-manage [create|switch|pause|resume|merge|close]` | Manage parallel workstreams |
+| `grill-me` | `/skill:grill-me <topic>` | Round-based interview to sharpen a plan or design |
 
 #### Quick work
 
@@ -181,9 +192,9 @@ Each agent is a focused pi-subagent with its own system prompt and tool allowlis
 
 #### Workstream management
 
-| Agent | Role | When to use |
+| Skill | Role | When to use |
 |-------|------|-------------|
-| `gsd-workstream` | Manage parallel feature branches | Create, switch, pause, resume, merge, close workstreams |
+| `/skill:workstream-manage` | Manage parallel feature branches | Create, switch, pause, resume, merge, close workstreams |
 
 ### The extension (hooks)
 
@@ -200,7 +211,7 @@ GSD's hook behavior implemented as a pi extension using the event system:
 
 `gsd-phase-loop` ties everything together. When you say "run phase N" in pi, the skill orchestrates:
 
-1. **Discuss** — You and pi discuss implementation decisions → `<NN>-CONTEXT.md`
+1. **Discuss** — `/skill:discuss-phase` interviews you to lock implementation decisions → `<NN>-CONTEXT.md`
 2. **Plan** — Spawns `gsd-phase-researcher` → `gsd-planner` → optional `gsd-plan-checker`
 3. **Execute** — For each wave, spawns `gsd-executor` subagents in parallel via `runs.all`
 4. **Verify** — Spawns `gsd-verifier` to check the actual codebase against must_haves
@@ -306,11 +317,11 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | Feature | pi implementation |
 | --------- | ------------------ |
 | Phase loop (Discuss→Plan→Execute→Verify→Ship) | `gsd-phase-loop` skill |
-| Interactive discuss with user decisions | `gsd-discuss` agent + `ask_user_question` |
+| Interactive discuss with user decisions | `/skill:discuss-phase` parent-turn skill |
 | Fresh-context subagents per step | All agents use `context: 'fresh'` |
 | Wave-based parallel execution | `runs.all` per wave, sequential across waves |
 | Goal-backward methodology | `gsd-planner` + `gsd-verifier` |
-| Locked decisions (D-NN-MM) | `gsd-discuss` → CONTEXT.md → planner enforcement |
+| Locked decisions (D-NN-MM) | `/skill:discuss-phase` → CONTEXT.md → planner enforcement |
 | Atomic commits per task | `gsd-executor` commit protocol |
 | Deviation rules (auto-fix bugs, escalate architecture) | `gsd-executor` built-in rules |
 | Quick tasks (no phase overhead) | `gsd-quick` agent |
@@ -332,11 +343,11 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | Security audit | `gsd-security-audit` agent — OWASP ASVS + threat model |
 | Autonomous execution | `gsd-autonomous` agent — full loop without human intervention |
 | Capture | `gsd-capture` agent — ideas, todos, decisions from conversation |
-| Backlog management | `gsd_backlog` tool + `gsd-backlog` agent — triage and promote items |
-| Workstreams | `gsd_workstream` tool + `gsd-workstream` agent — parallel feature branches |
+| Backlog management | `gsd_backlog` tool + `/skill:backlog-triage` skill |
+| Workstreams | `gsd_workstream` tool + `/skill:workstream-manage` skill |
 | Learnings | `gsd-learnings` agent — cross-phase learning accumulation |
 | Retrospective | `gsd-retrospective` agent — post-phase what went well / what didn't |
-| UI research | `gsd-ui-researcher` agent — interactive UI-SPEC.md design contract |
+| UI research | `/skill:ui-phase` skill — interactive UI-SPEC.md design contract |
 | UI checking | `gsd-ui-checker` agent — 6-dimension UI-SPEC.md validation |
 | UI audit | `gsd-ui-auditor` agent — 6-pillar visual audit of implemented UI |
 | Bug diagnosis loop | `diagnose-bugs` skill — `/skill:diagnose-bugs` (user-invoked) |
@@ -346,7 +357,7 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | Re-pitch a confusing message | `wait-what` skill — `/skill:wait-what` (user-invoked) |
 | Throwaway prototype command | `/gsd-prototype` tool + `gsd-prototype` agent |
 | Architecture review command | `/gsd-arch-review` tool + `gsd-arch-review` agent |
-| Round-based grill command | `/gsd-grill` tool + `gsd-grill` agent |
+| Round-based grill skill | `/skill:grill-me` (user-invoked) |
 | Teach a topic in the workspace | `teach` skill — `/skill:teach` (user-invoked) |
 | Improve codebase architecture | `improve-codebase-arch` skill — `/skill:improve-codebase-arch` (user-invoked) |
 | Deep-module design vocabulary | `codebase-design` skill — `/skill:codebase-design` (user-invoked) |

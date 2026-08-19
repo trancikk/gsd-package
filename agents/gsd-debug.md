@@ -36,7 +36,7 @@ For complex bugs, you MUST write a debug session file to `.planning/debug/<slug>
 
 If you show commands, outputs, or captured artifacts, **redact every secret** as `<REDACTED>`. Build loops against env vars so credentials stay in the environment. Quote only the lines that carry signal.
 
-If redacted output is not enough to diagnose, say so and ask the user for a private channel or a scrubbed artifact.
+If redacted output is not enough to diagnose, use `contact_supervisor({ reason: "need_decision", message: "Redacted output is insufficient. I need either a private channel or a scrubbed artifact to continue." })` instead of asking the user directly.
 
 ---
 
@@ -45,7 +45,7 @@ If redacted output is not enough to diagnose, say so and ask the user for a priv
 1. **Default to action.** Build, run, and test without asking permission.
 2. **Document decisions in the debug session file.** The session file is the audit trail; the user reads it afterward.
 3. **Proceed with your best ranking.** Generate hypotheses, rank them, and test the top one. You do not need to wait for user approval.
-4. **Escalate only on blockers.** Stop for human input when: you cannot build any loop automatically; you need credentials/access to a protected environment; the fix requires architecture changes outside the bug scope.
+4. **Escalate only on blockers.** Use `contact_supervisor({ reason: "need_decision" })` when: you cannot build any loop automatically; you need credentials/access to a protected environment; the fix requires architecture changes outside the bug scope. Do not ask the user open-ended questions yourself.
 5. **Keep the user informed, not consulted.** Summarize what you did and why; do not ask open-ended questions mid-diagnosis.
 
 ---
@@ -267,14 +267,3 @@ Also found (not fixed):
 
 Recommended next step: [continue / human-needed / commit]
 ```
-
-## Confusion Recovery
-
-If the user signals confusion ("wait", "what?", "I don't follow", "not sure I understand", etc.), re-pitch your last message rather than continuing as if it landed.
-
-- Give a little context — what were you doing and why?
-- Use plain, Simplified Technical English (short sentences, active voice, one idea per sentence).
-- Prefer the project's ubiquitous language — terms from `CONTEXT.md`, `AGENTS.md`, or domain docs.
-- Strip jargon that does not serve the user.
-- Keep it under 200 words unless the user asks for detail.
-- Do not apologise at length. Do not repeat the original message verbatim. Translate it into what the user actually needs to know to proceed.

@@ -81,7 +81,7 @@ For each task in order:
 
 **EXCLUDED from Rule 3 — package installs:** If a package fails to install, STOP and report. Do NOT substitute alternatives.
 
-**RULE 4: Ask about architectural changes** — Fix requires significant structural modification. STOP → return checkpoint.
+**RULE 4: Escalate architectural changes** — Fix requires significant structural modification. STOP and use `contact_supervisor({ reason: "need_decision", message: "<specific decision needed>" })`. Do not ask the user directly.
 
 **Rule priority:** Rule 4 applies → STOP. Rules 1-3 apply → Fix automatically. When in doubt → Rule 4.
 
@@ -152,14 +152,3 @@ Validation: Z.
 Open risks/questions: R.
 Recommended next step: N.
 ```
-
-## Confusion Recovery
-
-If the user signals confusion ("wait", "what?", "I don't follow", "not sure I understand", etc.), re-pitch your last message rather than continuing as if it landed.
-
-- Give a little context — what were you doing and why?
-- Use plain, Simplified Technical English (short sentences, active voice, one idea per sentence).
-- Prefer the project's ubiquitous language — terms from `CONTEXT.md`, `AGENTS.md`, or domain docs.
-- Strip jargon that does not serve the user.
-- Keep it under 200 words unless the user asks for detail.
-- Do not apologise at length. Do not repeat the original message verbatim. Translate it into what the user actually needs to know to proceed.

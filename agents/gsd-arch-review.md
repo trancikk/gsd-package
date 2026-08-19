@@ -94,7 +94,7 @@ top-recommendation: [candidate]
 2. ...
 
 ## Next step
-[explore top candidate with gsd-grill / gsd-discuss / planning phase]
+[explore top candidate with /skill:grill-me / /skill:discuss-phase / planning phase]
 ```
 
 ---
@@ -108,5 +108,5 @@ Report: [absolute path to HTML]
 Summary: [.planning/ARCHITECTURE-REVIEW.md]
 Top recommendation: [candidate]
 
-Next step: [explore with gsd-grill / add to roadmap]
+Next step: [explore with /skill:grill-me / add to roadmap]
 ```

@@ -56,7 +56,6 @@ This skill uses GSD-native agents registered at `~/.pi/agent/agents/gsd-*.md`. E
 ├── gsd-executor.md
 ├── gsd-verifier.md
 ├── gsd-plan-checker.md
-├── gsd-discuss.md
 ├── gsd-quick.md
 ├── gsd-debug.md
 ├── gsd-autonomous.md
@@ -67,15 +66,15 @@ This skill uses GSD-native agents registered at `~/.pi/agent/agents/gsd-*.md`. E
 ├── gsd-code-review.md
 ├── gsd-security-audit.md
 ├── gsd-retrospective.md
-├── gsd-ui-researcher.md
 ├── gsd-ui-checker.md
 ├── gsd-ui-auditor.md
 ├── gsd-capture.md
-├── gsd-learnings.md
-└── gsd-workstream.md
+└── gsd-learnings.md
 ```
 
 The table above lists the five core loop agents; the full set includes quick work, milestone management, session management, quality/review, knowledge capture, and UI agents listed under *Operations beyond the core phase loop* below.
+
+Interactive workflows (`discuss`, `backlog`, `ui-research`, `workstream`, `grill`) are **parent-turn skills**, not background subagents. They are invoked with `/skill:<name>`.
 
 ---
 
@@ -131,7 +130,16 @@ GSD ships pi prompt templates in `prompts/` and typed tools via the `gsd-command
 | `/gsd-verify` / `gsd_verify` | `<repo-path> <phase-dir> <output-path>` | Produce VERIFICATION.md for a phase |
 | `/gsd-prototype` / `gsd_prototype` | `<repo-path> <question> <output-path>` | Build a throwaway prototype and write PROTOTYPE.md |
 | `/gsd-arch-review` / `gsd_arch_review` | `<repo-path> <output-path> [scope]` | Produce an HTML architecture review and ARCHITECTURE-REVIEW.md |
-| `/gsd-grill` / `gsd_grill` | `<repo-path> <topic> <output-path>` | Run a round-based grill session and write GRILL.md |
+
+Interactive skills (run in the parent turn, not as subagents):
+
+| Skill | Invocation | Purpose |
+|-------|------------|---------|
+| `discuss-phase` | `/skill:discuss-phase <phase>` | Capture implementation decisions → `CONTEXT.md` |
+| `backlog-triage` | `/skill:backlog-triage` | Review and manage `.planning/BACKLOG.md` |
+| `ui-phase` | `/skill:ui-phase [phase]` | Produce `UI-SPEC.md` design contract |
+| `workstream-manage` | `/skill:workstream-manage [create|switch|pause|resume|merge|close]` | Manage parallel workstreams |
+| `grill-me` | `/skill:grill-me <topic>` | Round-based interview to sharpen a plan or design |
 
 Use forward slashes in paths (e.g., `C:/Sources/my-project/.planning/phases/01-foo/01-RESEARCH.md`).
 
@@ -165,7 +173,7 @@ Operations beyond the core phase loop are invoked by spawning the corresponding 
 | `quick` | `gsd-quick` | Single-task fixes: typos, missing imports, small refactors |
 | `debug` | `gsd-debug` | Disciplined 6-phase debugging: feedback loop → minimise → hypothesise → instrument → fix → verify |
 | `prototype` | `gsd-prototype` | Throwaway prototype to answer a design question |
-| `grill` | `gsd-grill` | Round-based interview to sharpen a plan or design |
+| `grill` | `/skill:grill-me` | Round-based interview to sharpen a plan or design (parent-turn skill) |
 
 ### Milestone management
 
@@ -188,10 +196,10 @@ Operations beyond the core phase loop are invoked by spawning the corresponding 
 | `code-review` | `gsd-code-review` | Two-axis review: Standards (conventions + smell baseline) and Spec (plan + requirements) |
 | `security-audit` | `gsd-security-audit` | OWASP ASVS scan + threat model |
 | `arch-review` | `gsd-arch-review` | HTML architecture review of deepening opportunities |
-| `backlog` | `gsd-backlog` | Interactive backlog triage |
-| `workstream` | `gsd-workstream` | Create, switch, pause, resume, merge, close parallel feature branches |
+| `backlog` | `/skill:backlog-triage` | Interactive backlog triage (parent-turn skill) |
+| `workstream` | `/skill:workstream-manage` | Create, switch, pause, resume, merge, close parallel feature branches (parent-turn skill) |
 | `retrospective` | `gsd-retrospective` | Post-phase what went well / what didn't |
-| `ui-research` | `gsd-ui-researcher` | Produce UI-SPEC.md design contract (interactive) |
+| `ui-research` | `/skill:ui-phase` | Produce UI-SPEC.md design contract (parent-turn skill) |
 | `ui-check` | `gsd-ui-checker` | Validate UI-SPEC.md against 6 dimensions |
 | `ui-review` | `gsd-ui-auditor` | Retroactive 6-pillar visual audit of implemented UI |
 
