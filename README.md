@@ -339,6 +339,16 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | UI research | `gsd-ui-researcher` agent — interactive UI-SPEC.md design contract |
 | UI checking | `gsd-ui-checker` agent — 6-dimension UI-SPEC.md validation |
 | UI audit | `gsd-ui-auditor` agent — 6-pillar visual audit of implemented UI |
+| Bug diagnosis loop | `diagnose-bugs` skill — `/skill:diagnose-bugs` (user-invoked) |
+| Code review (Standards vs Spec) | `review-code` skill — `/skill:review-code` (user-invoked) |
+| Writing docs for agents | `write-for-agents` skill — `/skill:write-for-agents` (user-invoked) |
+| Stress-test a plan/decision | `grill-me` skill — `/skill:grill-me` (user-invoked) |
+| Re-pitch a confusing message | `wait-what` skill — `/skill:wait-what` (user-invoked) |
+| Teach a topic in the workspace | `teach` skill — `/skill:teach` (user-invoked) |
+| Improve codebase architecture | `improve-codebase-arch` skill — `/skill:improve-codebase-arch` (user-invoked) |
+| Deep-module design vocabulary | `codebase-design` skill — `/skill:codebase-design` (user-invoked) |
+| Build/sharpen domain model | `domain-modeling` skill — `/skill:domain-modeling` (user-invoked) |
+| Throwaway prototype for a design question | `prototype` skill — `/skill:prototype` (user-invoked) |
 
 ### ❌ Not yet implemented
 
