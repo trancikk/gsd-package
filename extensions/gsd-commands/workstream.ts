@@ -7,7 +7,8 @@ import type {
 	ExtensionContext,
 } from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import { resolveAbsolutePath, writeAtomic } from "./utils";
+import { resolveAbsolutePath } from "./utils";
+import * as registry from "./registry";
 
 export type WorkstreamStatus = "active" | "paused" | "merged" | "closed";
 
@@ -25,11 +26,11 @@ export interface Workstream {
 }
 
 function workstreamsPath(repoPath: string): string {
-	return path.join(repoPath, ".planning/WORKSTREAMS.md");
+	return registry.artifactPath("workstreams", repoPath);
 }
 
 function statePath(repoPath: string): string {
-	return path.join(repoPath, ".planning/STATE.md");
+	return registry.artifactPath("state", repoPath);
 }
 
 function defaultTemplate(): string {
@@ -64,16 +65,17 @@ function readWorkstreams(
 	repoPath: string,
 	ensure = true,
 ): { content: string; items: Workstream[]; activeId?: string } {
-	const wp = ensure
-		? ensureWorkstreamsFile(repoPath)
-		: workstreamsPath(repoPath);
-	if (!fs.existsSync(wp)) {
+	const wp = workstreamsPath(repoPath);
+	if (ensure && !fs.existsSync(wp)) {
+		ensureWorkstreamsFile(repoPath);
+	}
+	const loaded = registry.loadOptional("workstreams", repoPath);
+	if (!loaded) {
 		return { content: defaultTemplate(), items: [], activeId: undefined };
 	}
-	const content = fs.readFileSync(wp, "utf8");
-	const items = parseWorkstreams(content);
-	const activeId = parseActiveWorkstream(content);
-	return { content, items, activeId };
+	const items = parseWorkstreams(loaded.body);
+	const activeId = parseActiveWorkstream(loaded.body);
+	return { content: loaded.body, items, activeId };
 }
 
 function parseActiveWorkstream(content: string): string | undefined {
@@ -268,6 +270,7 @@ function buildToolResultText(payload: any): AgentToolResult<any> {
 				text: JSON.stringify(payload, null, 2),
 			},
 		],
+		details: payload,
 	};
 }
 
@@ -275,17 +278,8 @@ function updateStateActiveWorkstream(
 	repoPath: string,
 	workstreamId?: string,
 ): void {
-	const sp = statePath(repoPath);
-	if (!fs.existsSync(sp)) return;
-	const content = fs.readFileSync(sp, "utf8");
-	const marker = /^(active_workstream:\s*.*)$/m;
-	const replacement = workstreamId
-		? `active_workstream: ${workstreamId}`
-		: "active_workstream: null";
-	const newContent = marker.test(content)
-		? content.replace(marker, replacement)
-		: content.replace(/^(---\n[\s\S]*?\n)(---\n)/m, `$1${replacement}\n$2`);
-	writeAtomic(sp, newContent);
+	if (!fs.existsSync(statePath(repoPath))) return;
+	registry.updateField("state", repoPath, "active_workstream", workstreamId ?? null);
 }
 
 export function registerWorkstreamTools(pi: ExtensionAPI) {
@@ -429,7 +423,7 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 				};
 				items.push(newItem);
 				const newContent = rebuildWorkstreams(content, items, newItem);
-				writeAtomic(wp, newContent);
+				registry.save("workstreams", repoPath, { body: newContent });
 				updateStateActiveWorkstream(repoPath, id);
 				return buildToolResultText({
 					ok: true,
@@ -459,7 +453,7 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 				const activeItem =
 					activeId === item.id ? item : items.find((i) => i.id === activeId);
 				const newContent = rebuildWorkstreams(content, items, activeItem);
-				writeAtomic(wp, newContent);
+				registry.save("workstreams", repoPath, { body: newContent });
 				return buildToolResultText({
 					ok: true,
 					path: wp,
@@ -483,7 +477,7 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 					}
 				}
 				const newContent = rebuildWorkstreams(content, items, item);
-				writeAtomic(wp, newContent);
+				registry.save("workstreams", repoPath, { body: newContent });
 				updateStateActiveWorkstream(repoPath, item.id);
 				return buildToolResultText({
 					ok: true,
@@ -510,7 +504,7 @@ export function registerWorkstreamTools(pi: ExtensionAPI) {
 				? item
 				: items.find((i) => i.id === activeId && i.status === "active");
 			const newContent = rebuildWorkstreams(content, items, activeItem);
-			writeAtomic(wp, newContent);
+			registry.save("workstreams", repoPath, { body: newContent });
 
 			if (activeId === item.id && item.status !== "active") {
 				updateStateActiveWorkstream(repoPath, activeItem?.id);

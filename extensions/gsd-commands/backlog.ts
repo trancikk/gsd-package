@@ -3,7 +3,8 @@ import * as path from "node:path";
 import { Type } from "typebox";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import { resolveAbsolutePath, writeAtomic, readFileOptional } from "./utils";
+import { resolveAbsolutePath } from "./utils";
+import * as registry from "./registry";
 
 const SECTIONS = ["Open", "In Progress", "Blocked", "Closed"] as const;
 type Section = (typeof SECTIONS)[number];
@@ -23,7 +24,7 @@ interface BacklogItem {
 }
 
 function backlogPath(repoPath: string): string {
-	return path.join(repoPath, ".planning/BACKLOG.md");
+	return registry.artifactPath("backlog", repoPath);
 }
 
 function defaultTemplate(): string {
@@ -65,7 +66,7 @@ function ensureBacklog(repoPath: string): string {
 
 function readBacklog(repoPath: string): { content: string; items: BacklogItem[] } {
 	const bp = ensureBacklog(repoPath);
-	const content = fs.readFileSync(bp, "utf8");
+	const { body: content } = registry.load("backlog", repoPath);
 	return { content, items: parseBacklog(content) };
 }
 
@@ -211,7 +212,7 @@ function nextId(items: BacklogItem[]): string {
 	return `B-${String(max + 1).padStart(3, "0")}`;
 }
 
-function buildToolResultText(payload: any): AgentToolResult {
+function buildToolResultText(payload: any): AgentToolResult<any> {
 	return {
 		content: [
 			{
@@ -219,6 +220,7 @@ function buildToolResultText(payload: any): AgentToolResult {
 				text: JSON.stringify(payload, null, 2),
 			},
 		],
+		details: payload,
 	};
 }
 
@@ -249,7 +251,7 @@ export function registerBacklogTools(pi: ExtensionAPI) {
 			linkedPhase: Type.Optional(Type.String({ description: "Phase number the item is linked to (for update/promote)" })),
 			linkedDecision: Type.Optional(Type.String({ description: "Decision ID the item is linked to (for update)" })),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
 			const bp = ensureBacklog(repoPath);
 			let { content, items } = readBacklog(repoPath);
@@ -280,7 +282,7 @@ export function registerBacklogTools(pi: ExtensionAPI) {
 				};
 				items.push(newItem);
 				const newContent = rebuildBacklog(content, items);
-				writeAtomic(bp, newContent);
+				registry.save("backlog", repoPath, { body: newContent });
 				return buildToolResultText({ ok: true, path: bp, operation: "add", item: newItem });
 			}
 
@@ -311,7 +313,7 @@ export function registerBacklogTools(pi: ExtensionAPI) {
 				}
 
 				const newContent = rebuildBacklog(content, items);
-				writeAtomic(bp, newContent);
+				registry.save("backlog", repoPath, { body: newContent });
 				return buildToolResultText({ ok: true, path: bp, operation: params.operation, item });
 			}
 

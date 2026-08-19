@@ -1,42 +1,21 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
 import { Type } from "typebox";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import { resolveAbsolutePath, writeAtomic } from "./utils";
-import { parseFrontmatter, stringifyFrontmatter } from "./yaml";
+import { resolveAbsolutePath } from "./utils";
+import * as registry from "./registry";
 
 function statePath(repoPath: string): string {
-	return path.join(repoPath, ".planning/STATE.md");
+	return registry.artifactPath("state", repoPath);
 }
 
 function loadState(repoPath: string) {
-	const sp = statePath(repoPath);
-	const content = fs.readFileSync(sp, "utf8");
-	return { ...parseFrontmatter(content), sp };
+	const { path: sp, frontmatter, body } = registry.load("state", repoPath);
+	return { frontmatter, body, sp };
 }
 
 function saveState(repoPath: string, frontmatter: Record<string, any>, body: string): void {
-	const sp = statePath(repoPath);
 	frontmatter.last_updated = new Date().toISOString();
-	writeAtomic(sp, stringifyFrontmatter(frontmatter) + body);
-}
-
-function getByPath(obj: Record<string, any>, pathStr: string): any {
-	return pathStr.split(".").reduce((o, key) => (o == null ? undefined : o[key]), obj);
-}
-
-function setByPath(obj: Record<string, any>, pathStr: string, value: any): void {
-	const keys = pathStr.split(".");
-	const last = keys.pop()!;
-	let target: Record<string, any> = obj;
-	for (const key of keys) {
-		if (target[key] == null || typeof target[key] !== "object" || Array.isArray(target[key])) {
-			target[key] = {};
-		}
-		target = target[key];
-	}
-	target[last] = value;
+	registry.save("state", repoPath, { frontmatter, body });
 }
 
 function formatDate(): string {
@@ -48,24 +27,7 @@ function padPhase(num: number | string): string {
 	return n;
 }
 
-function listPhaseDirs(phasesDir: string): Array<{ num: string; dir: string; path: string }> {
-	if (!fs.existsSync(phasesDir)) return [];
-	return fs
-		.readdirSync(phasesDir, { withFileTypes: true })
-		.filter((d) => d.isDirectory() && /^\d{2}-/.test(d.name))
-		.map((d) => ({ num: d.name.slice(0, 2), dir: d.name, path: path.join(phasesDir, d.name) }))
-		.sort((a, b) => a.num.localeCompare(b.num));
-}
-
-function countPlans(phasePath: string): { total: number; completed: number } {
-	if (!fs.existsSync(phasePath)) return { total: 0, completed: 0 };
-	const files = fs.readdirSync(phasePath, { withFileTypes: true });
-	const plans = files.filter((f) => f.isFile() && /^\d{2}-\d{2}-PLAN\.md$/.test(f.name));
-	const summaries = files.filter((f) => f.isFile() && /^\d{2}-\d{2}-SUMMARY\.md$/.test(f.name));
-	return { total: plans.length, completed: summaries.length };
-}
-
-function buildToolResultText(payload: any): AgentToolResult {
+function buildToolResultText(payload: any): AgentToolResult<any> {
 	return {
 		content: [
 			{
@@ -73,6 +35,7 @@ function buildToolResultText(payload: any): AgentToolResult {
 				text: JSON.stringify(payload, null, 2),
 			},
 		],
+		details: payload,
 	};
 }
 
@@ -86,7 +49,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 				description: "Path to the repo (absolute or relative to session cwd)",
 			}),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
 			const { frontmatter, body, sp } = loadState(repoPath);
 			return buildToolResultText({ ok: true, path: sp, frontmatter, body });
@@ -109,19 +72,23 @@ export function registerStateTools(pi: ExtensionAPI) {
 				description: "New scalar value",
 			}),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
+			const { previous, current, path: p } = registry.updateField(
+				"state",
+				repoPath,
+				params.field,
+				params.value,
+			);
 			const { frontmatter, body } = loadState(repoPath);
-			const previous = getByPath(frontmatter, params.field);
-			setByPath(frontmatter, params.field, params.value);
 			frontmatter.last_activity = formatDate();
 			saveState(repoPath, frontmatter, body);
 			return buildToolResultText({
 				ok: true,
-				path: statePath(repoPath),
+				path: p,
 				field: params.field,
 				previous,
-				value: params.value,
+				value: current,
 			});
 		},
 	});
@@ -168,7 +135,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 				}),
 			),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
 			const { frontmatter, body } = loadState(repoPath);
 			const phase = padPhase(params.phase);
@@ -217,7 +184,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 				path: statePath(repoPath),
 				operation: params.operation,
 				phase,
-				plan: params.plan != null ? padPhase(params.plan) : undefined,
+				plan: params.plan == null ? undefined : padPhase(params.plan),
 				frontmatter: {
 					active_phase: frontmatter.active_phase,
 					current_phase: frontmatter.current_phase,
@@ -241,26 +208,23 @@ export function registerStateTools(pi: ExtensionAPI) {
 				description: "Path to the repo (absolute or relative to session cwd)",
 			}),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult> {
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
 			const { frontmatter, body } = loadState(repoPath);
-			const phasesDir = path.join(repoPath, ".planning/phases");
-			const phaseDirs = listPhaseDirs(phasesDir);
+			const phases = registry.listPhases(repoPath);
 
 			let totalPlans = 0;
 			let completedPlans = 0;
 			let completedPhases = 0;
 
-			for (const phase of phaseDirs) {
-				const counts = countPlans(phase.path);
-				totalPlans += counts.total;
-				completedPlans += counts.completed;
-				const hasVerification = fs.existsSync(path.join(phase.path, `${phase.dir}-VERIFICATION.md`));
-				if (hasVerification) completedPhases++;
+			for (const phase of phases) {
+				totalPlans += phase.plans;
+				completedPlans += phase.summaries;
+				if (phase.hasVerification) completedPhases++;
 			}
 
 			const progress = {
-				total_phases: phaseDirs.length,
+				total_phases: phases.length,
 				completed_phases: completedPhases,
 				total_plans: totalPlans,
 				completed_plans: completedPlans,
