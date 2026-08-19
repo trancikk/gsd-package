@@ -1,9 +1,11 @@
 {
-  "name": "gsd-hooks",
-  "version": "1.0.0",
-  "description": "GSD Core hooks for pi — context monitoring, phase boundaries, commit validation",
-  "main": "index.ts",
-  "pi": {
-    "extensions": ["./index.ts"]
-  }
+	"name": "gsd-hooks",
+	"version": "1.0.0",
+	"description": "GSD Core hooks for pi — context monitoring, phase boundaries, commit validation",
+	"main": "index.ts",
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	}
 }

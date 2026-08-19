@@ -5,13 +5,14 @@
  * read-injection scanner, and workflow guard are implemented in focused modules
  * under this directory. This file only wires them to the extension API.
  */
+
+import { execSync } from "node:child_process";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { handleSessionStart } from "./status-renderer";
+import { handleCommitValidation } from "./commit-guard";
 import { handleTurnEnd, resetContextWarnings } from "./context-guard";
 import { handlePromptAndWorkflowGuard, handleReadInjection } from "./injection-guard";
-import { handleCommitValidation } from "./commit-guard";
-import { execSync } from "node:child_process";
 import { findGsdRoot } from "./status";
+import { handleSessionStart } from "./status-renderer";
 
 let gsdActive = false;
 
@@ -47,10 +48,7 @@ function handlePhaseBoundary(event: any, ctx: any) {
 		});
 		if (!status.trim()) return;
 		const phaseContext = `Uncommitted changes detected after .planning/ update.`;
-		ctx.ui.notify(
-			`${phaseContext}\nRun: git add -A && git commit -m "<type>(<scope>): <subject>"`,
-			"info",
-		);
+		ctx.ui.notify(`${phaseContext}\nRun: git add -A && git commit -m "<type>(<scope>): <subject>"`, "info");
 	} catch {
 		// git not available or not a repo, skip commit reminder
 	}

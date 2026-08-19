@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
-import { join, dirname } from "node:path";
+import { dirname, join } from "node:path";
 
 export interface GsdState {
 	milestone: string;
@@ -67,16 +67,11 @@ export function parseStateMd(content: string): GsdState {
 			if (key === "milestone") state.milestone = v;
 			if (key === "milestone_name") state.milestoneName = v;
 			if (key === "status") state.status = v === "null" ? "" : v;
-			if (key === "active_phase")
-				state.activePhase = v === "null" || v === "" ? null : v;
-			if (key === "current_phase_name")
-				state.currentPhaseName = v === "null" || v === "" ? null : v;
-			if (key === "current_plan")
-				state.currentPlan = v === "null" || v === "" ? null : v;
-			if (key === "active_workstream")
-				state.activeWorkstream = v === "null" || v === "" ? null : v;
-			if (key === "next_action")
-				state.nextAction = v === "null" || v === "" ? null : v;
+			if (key === "active_phase") state.activePhase = v === "null" || v === "" ? null : v;
+			if (key === "current_phase_name") state.currentPhaseName = v === "null" || v === "" ? null : v;
+			if (key === "current_plan") state.currentPlan = v === "null" || v === "" ? null : v;
+			if (key === "active_workstream") state.activeWorkstream = v === "null" || v === "" ? null : v;
+			if (key === "next_action") state.nextAction = v === "null" || v === "" ? null : v;
 			if (key === "percent") state.percent = parseInt(v, 10);
 		}
 		const progressMatch = fm.match(/^progress:\s*[\s\S]*?percent:\s*(\d+)/m);
@@ -92,9 +87,7 @@ export function parseStateMd(content: string): GsdState {
 		}
 	}
 
-	const phaseMatch = content.match(
-		/^Phase:\s*(\d+)\s+of\s+(\d+)(?:\s+\(([^)]+)\))?/m,
-	);
+	const phaseMatch = content.match(/^Phase:\s*(\d+)\s+of\s+(\d+)(?:\s+\(([^)]+)\))?/m);
 	if (phaseMatch) {
 		state.phaseNum = phaseMatch[1];
 		state.phaseTotal = phaseMatch[2];

@@ -61,7 +61,7 @@ export function parseYaml(text: string): any {
 		if (colonIdx === -1) continue;
 
 		const key = line.slice(indent, colonIdx).trim();
-		let valueStr = line.slice(colonIdx + 1).trim();
+		const valueStr = line.slice(colonIdx + 1).trim();
 
 		// Pop stack until we are at the parent of the current indent
 		while (stack.length > 1 && stack[stack.length - 1].indent >= indent) {
@@ -91,7 +91,7 @@ function needsQuoting(s: string): boolean {
 	if (s === "") return true;
 	if (/^(null|true|false|~)$/i.test(s)) return true;
 	if (/^-?\d+(\.\d+)?$/.test(s)) return true;
-	if (/[\s:\[\]{}#,"'\\]/.test(s)) return true;
+	if (/[\s:[\]{}#,"'\\]/.test(s)) return true;
 	return false;
 }
 

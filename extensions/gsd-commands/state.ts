@@ -1,8 +1,8 @@
-import { Type } from "typebox";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import { resolveAbsolutePath } from "./utils";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
 import * as registry from "./registry";
+import { resolveAbsolutePath } from "./utils";
 
 function statePath(repoPath: string): string {
 	return registry.artifactPath("state", repoPath);
@@ -74,12 +74,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 		}),
 		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
-			const { previous, current, path: p } = registry.updateField(
-				"state",
-				repoPath,
-				params.field,
-				params.value,
-			);
+			const { previous, current, path: p } = registry.updateField("state", repoPath, params.field, params.value);
 			const { frontmatter, body } = loadState(repoPath);
 			frontmatter.last_activity = formatDate();
 			saveState(repoPath, frontmatter, body);
@@ -96,8 +91,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_state_advance",
 		label: "GSD State Advance",
-		description:
-			"Perform a common state transition: begin a phase, complete a plan, or complete a phase.",
+		description: "Perform a common state transition: begin a phase, complete a plan, or complete a phase.",
 		parameters: Type.Object({
 			repoPath: Type.String({
 				description: "Path to the repo (absolute or relative to session cwd)",
@@ -158,9 +152,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 				frontmatter.status = "executing";
 				frontmatter.stopped_at = `Plan ${phase}-${planNum} completed`;
 			} else if (params.operation === "complete-phase") {
-				const completed = Array.isArray(frontmatter.completed_phases)
-					? frontmatter.completed_phases
-					: [];
+				const completed = Array.isArray(frontmatter.completed_phases) ? frontmatter.completed_phases : [];
 				if (!completed.includes(phase)) {
 					completed.push(phase);
 				}

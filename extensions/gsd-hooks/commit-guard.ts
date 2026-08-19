@@ -3,8 +3,9 @@
  *
  * Warns when a `git commit` command does not follow Conventional Commits.
  */
-import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
+
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { isToolCallEventType } from "@earendil-works/pi-coding-agent";
 
 export function handleCommitValidation(event: any, ctx: ExtensionContext): void {
 	if (!isToolCallEventType("bash", event)) return;
@@ -21,8 +22,7 @@ export function handleCommitValidation(event: any, ctx: ExtensionContext): void 
 	if (!msg) return;
 
 	const subject = msg.split("\n")[0];
-	const conventionalPattern =
-		/^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?:\s.+/;
+	const conventionalPattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore)(\(.+\))?:\s.+/;
 
 	if (!conventionalPattern.test(subject)) {
 		ctx.ui.notify(

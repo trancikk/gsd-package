@@ -5,7 +5,7 @@
  * sets the footer status accordingly.
  */
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { readGsdState, formatStatus } from "./status";
+import { formatStatus, readGsdState } from "./status";
 
 export function handleSessionStart(_event: any, ctx: ExtensionContext): boolean {
 	const state = readGsdState(ctx.cwd);

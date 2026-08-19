@@ -5,7 +5,7 @@
  * below configured thresholds. Also refreshes the GSD status display.
  */
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { readGsdState, formatStatus } from "./status";
+import { formatStatus, readGsdState } from "./status";
 
 const WARNING_THRESHOLD = 35; // remaining percentage
 const CRITICAL_THRESHOLD = 25;

@@ -19,9 +19,7 @@ const INJECTION_PATTERNS = [
 	/<!--\s*.*?(?:ignore|system|prompt|instructions?).*?-->/i,
 ];
 
-const SUSPICIOUS_MARKDOWN_PATTERNS = [
-	/\[\]\(.*?(?:instruction|prompt|ignore).*?\)/i,
-];
+const SUSPICIOUS_MARKDOWN_PATTERNS = [/\[\]\(.*?(?:instruction|prompt|ignore).*?\)/i];
 
 function scanForInjection(text: string): string | null {
 	if (!text) return null;
@@ -45,10 +43,7 @@ function isStateFile(filePath: string): boolean {
 }
 
 function isSummaryOrVerification(filePath: string): boolean {
-	return (
-		/\d{2}-VERIFICATION\.md$/.test(filePath) ||
-		/\d{2}-\d{2}-SUMMARY\.md$/.test(filePath)
-	);
+	return /\d{2}-VERIFICATION\.md$/.test(filePath) || /\d{2}-\d{2}-SUMMARY\.md$/.test(filePath);
 }
 
 function extractTextContent(toolName: string, input: any): string | null {
@@ -89,12 +84,7 @@ export function handlePromptAndWorkflowGuard(event: any, ctx: ExtensionContext):
 	runWorkflowGuard(filePath, ctx);
 }
 
-function runPromptGuard(
-	toolName: string,
-	filePath: string,
-	input: any,
-	ctx: ExtensionContext,
-): void {
+function runPromptGuard(toolName: string, filePath: string, input: any, ctx: ExtensionContext): void {
 	if (!isPlanningPath(filePath) || isStateFile(filePath)) return;
 	const content = extractTextContent(toolName, input);
 	if (!content) return;
@@ -113,15 +103,9 @@ function runWorkflowGuard(filePath: string, ctx: ExtensionContext): void {
 	if (!state?.nextAction) return;
 
 	const isCodeEdit = !isPlanningPath(filePath);
-	const isPlanEdit =
-		isPlanningPath(filePath) &&
-		!isStateFile(filePath) &&
-		!isSummaryOrVerification(filePath);
+	const isPlanEdit = isPlanningPath(filePath) && !isStateFile(filePath) && !isSummaryOrVerification(filePath);
 
-	if (
-		(state.nextAction === "discuss-phase" || state.nextAction === "plan-phase") &&
-		isCodeEdit
-	) {
+	if ((state.nextAction === "discuss-phase" || state.nextAction === "plan-phase") && isCodeEdit) {
 		ctx.ui.notify(
 			`WORKFLOW GUARD: Editing code file ${filePath} while STATE.md next_action is "${state.nextAction}".\n` +
 				`Expected: discuss/plan artifacts only. If you are intentionally fixing something, continue.`,

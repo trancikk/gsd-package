@@ -1,10 +1,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Type } from "typebox";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import { resolveAbsolutePath } from "./utils";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
 import * as registry from "./registry";
+import { resolveAbsolutePath } from "./utils";
 
 const SECTIONS = ["Open", "In Progress", "Blocked", "Closed"] as const;
 type Section = (typeof SECTIONS)[number];
@@ -64,7 +64,10 @@ function ensureBacklog(repoPath: string): string {
 	return bp;
 }
 
-function readBacklog(repoPath: string): { content: string; items: BacklogItem[] } {
+function readBacklog(repoPath: string): {
+	content: string;
+	items: BacklogItem[];
+} {
 	const bp = ensureBacklog(repoPath);
 	const { body: content } = registry.load("backlog", repoPath);
 	return { content, items: parseBacklog(content) };
@@ -230,38 +233,63 @@ export function registerBacklogTools(pi: ExtensionAPI) {
 		label: "GSD Backlog",
 		description: "Manage the .planning/BACKLOG.md file: list, add, update, close, or promote items.",
 		parameters: Type.Object({
-			repoPath: Type.String({ description: "Path to the repo (absolute or relative to session cwd)" }),
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
 			operation: Type.Union(
 				[
-					Type.Literal("list", { description: "List backlog items, optionally filtered" }),
+					Type.Literal("list", {
+						description: "List backlog items, optionally filtered",
+					}),
 					Type.Literal("add", { description: "Add a new backlog item" }),
-					Type.Literal("update", { description: "Update fields of an existing item" }),
+					Type.Literal("update", {
+						description: "Update fields of an existing item",
+					}),
 					Type.Literal("close", { description: "Close an item" }),
-					Type.Literal("promote", { description: "Promote an item to a phase (sets status in-progress and linked phase)" }),
+					Type.Literal("promote", {
+						description: "Promote an item to a phase (sets status in-progress and linked phase)",
+					}),
 				],
 				{ description: "Operation to perform" },
 			),
 			status: Type.Optional(Type.String({ description: "Filter by status (for list)" })),
 			type: Type.Optional(Type.String({ description: "Filter by type (for list)" })),
 			priority: Type.Optional(Type.String({ description: "Filter by priority (for list)" })),
-			id: Type.Optional(Type.String({ description: "Item ID, e.g. B-001 (for update/close/promote)" })),
+			id: Type.Optional(
+				Type.String({
+					description: "Item ID, e.g. B-001 (for update/close/promote)",
+				}),
+			),
 			title: Type.Optional(Type.String({ description: "Item title (for add/update)" })),
 			description: Type.Optional(Type.String({ description: "Item description (for add/update)" })),
 			source: Type.Optional(Type.String({ description: "Where the item came from (for add/update)" })),
-			linkedPhase: Type.Optional(Type.String({ description: "Phase number the item is linked to (for update/promote)" })),
-			linkedDecision: Type.Optional(Type.String({ description: "Decision ID the item is linked to (for update)" })),
+			linkedPhase: Type.Optional(
+				Type.String({
+					description: "Phase number the item is linked to (for update/promote)",
+				}),
+			),
+			linkedDecision: Type.Optional(
+				Type.String({
+					description: "Decision ID the item is linked to (for update)",
+				}),
+			),
 		}),
 		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
 			const bp = ensureBacklog(repoPath);
-			let { content, items } = readBacklog(repoPath);
+			const { content, items } = readBacklog(repoPath);
 
 			if (params.operation === "list") {
 				let filtered = items;
 				if (params.status) filtered = filtered.filter((i) => i.status === params.status);
 				if (params.type) filtered = filtered.filter((i) => i.type === params.type);
 				if (params.priority) filtered = filtered.filter((i) => i.priority === params.priority);
-				return buildToolResultText({ ok: true, path: bp, count: filtered.length, items: filtered });
+				return buildToolResultText({
+					ok: true,
+					path: bp,
+					count: filtered.length,
+					items: filtered,
+				});
 			}
 
 			if (params.operation === "add") {
@@ -283,7 +311,12 @@ export function registerBacklogTools(pi: ExtensionAPI) {
 				items.push(newItem);
 				const newContent = rebuildBacklog(content, items);
 				registry.save("backlog", repoPath, { body: newContent });
-				return buildToolResultText({ ok: true, path: bp, operation: "add", item: newItem });
+				return buildToolResultText({
+					ok: true,
+					path: bp,
+					operation: "add",
+					item: newItem,
+				});
 			}
 
 			if (params.operation === "update" || params.operation === "close" || params.operation === "promote") {
@@ -314,7 +347,12 @@ export function registerBacklogTools(pi: ExtensionAPI) {
 
 				const newContent = rebuildBacklog(content, items);
 				registry.save("backlog", repoPath, { body: newContent });
-				return buildToolResultText({ ok: true, path: bp, operation: params.operation, item });
+				return buildToolResultText({
+					ok: true,
+					path: bp,
+					operation: params.operation,
+					item,
+				});
 			}
 
 			throw new Error(`Unknown operation: ${params.operation}`);

@@ -7,9 +7,7 @@ export function toForwardSlash(input: string): string {
 
 export function resolveAbsolutePath(input: string, cwd: string): string {
 	const normalized = toForwardSlash(input);
-	return path.isAbsolute(normalized)
-		? normalized
-		: toForwardSlash(path.resolve(cwd, normalized));
+	return path.isAbsolute(normalized) ? normalized : toForwardSlash(path.resolve(cwd, normalized));
 }
 
 export function ensureOutputDir(outputPath: string): void {
@@ -33,10 +31,7 @@ export function buildCrossPlatformGate(outputPath: string): string {
  */
 export function writeAtomic(filePath: string, content: string): void {
 	const dir = path.dirname(filePath);
-	const tmpPath = path.join(
-		dir,
-		`.tmp-${path.basename(filePath)}-${Date.now()}`,
-	);
+	const tmpPath = path.join(dir, `.tmp-${path.basename(filePath)}-${Date.now()}`);
 	fs.writeFileSync(tmpPath, content, "utf8");
 	try {
 		fs.renameSync(tmpPath, filePath);

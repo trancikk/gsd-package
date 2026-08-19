@@ -6,11 +6,11 @@
  */
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { Type } from "typebox";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import { resolveAbsolutePath } from "./utils";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
 import * as registry from "./registry";
+import { resolveAbsolutePath } from "./utils";
 
 export interface NextActionResult {
 	valid_actions: string[];
@@ -182,23 +182,20 @@ export function registerNextActionTool(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_next_action",
 		label: "GSD Next Action",
-		description:
-			"Suggest valid next actions based on .planning/STATE.md without mutating it.",
+		description: "Suggest valid next actions based on .planning/STATE.md without mutating it.",
 		parameters: Type.Object({
 			repoPath: Type.String({
 				description: "Path to the repo (absolute or relative to session cwd)",
 			}),
 		}),
-		async execute(
-			_id,
-			params,
-			_signal,
-			_onUpdate,
-			ctx,
-		): Promise<AgentToolResult<any>> {
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
 			const result = determineNextAction(repoPath);
-			return buildToolResultText({ ok: true, path: registry.artifactPath("state", repoPath), ...result });
+			return buildToolResultText({
+				ok: true,
+				path: registry.artifactPath("state", repoPath),
+				...result,
+			});
 		},
 	});
 }

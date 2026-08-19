@@ -9,7 +9,15 @@ import * as path from "node:path";
 import { resolveAbsolutePath, writeAtomic } from "./utils";
 import { parseFrontmatter, stringifyFrontmatter } from "./yaml";
 
-export type ArtifactName = "state" | "backlog" | "workstreams" | "project" | "roadmap" | "requirements" | "conventions" | "config";
+export type ArtifactName =
+	| "state"
+	| "backlog"
+	| "workstreams"
+	| "project"
+	| "roadmap"
+	| "requirements"
+	| "conventions"
+	| "config";
 
 export interface LoadedArtifact {
 	path: string;
@@ -138,7 +146,15 @@ export function listPhases(repoPath: string): PhaseMetadata[] {
 			const plans = files.filter((f) => f.isFile() && /^\d{2}-\d{2}-PLAN\.md$/.test(f.name)).length;
 			const summaries = files.filter((f) => f.isFile() && /^\d{2}-\d{2}-SUMMARY\.md$/.test(f.name)).length;
 			const hasVerification = files.some((f) => f.isFile() && f.name === `${d.name}-VERIFICATION.md`);
-			return { num, slug, dir: d.name, path: phasePath, plans, summaries, hasVerification };
+			return {
+				num,
+				slug,
+				dir: d.name,
+				path: phasePath,
+				plans,
+				summaries,
+				hasVerification,
+			};
 		})
 		.sort((a, b) => a.num.localeCompare(b.num));
 }

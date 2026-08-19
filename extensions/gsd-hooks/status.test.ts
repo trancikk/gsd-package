@@ -1,12 +1,8 @@
-/**
- * Manual test for gsd-hooks status parsing and formatting.
- *
- * Run with:
- *   npx tsx extensions/gsd-hooks/status.test.ts
- */
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
-import { parseStateMd, formatStatus, findGsdRoot } from "./status";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { findGsdRoot, formatStatus, parseStateMd } from "./status";
 
 const sampleState = `---
 gsd_state_version: '1.0'
@@ -42,54 +38,38 @@ progress:
 - **Decisions:** None yet
 `;
 
-function assertEqual(actual: any, expected: any, msg: string) {
-	const a = JSON.stringify(actual);
-	const e = JSON.stringify(expected);
-	if (a !== e) {
-		console.error(`FAIL: ${msg}`);
-		console.error(`  expected: ${e}`);
-		console.error(`  actual:   ${a}`);
-		process.exit(1);
-	}
-	console.log(`PASS: ${msg}`);
+function createTempRepo(): string {
+	return fs.mkdtempSync(path.join(os.tmpdir(), "gsd-hooks-status-test-"));
 }
 
-function assertTrue(condition: boolean, msg: string) {
-	if (!condition) {
-		console.error(`FAIL: ${msg}`);
-		process.exit(1);
-	}
-	console.log(`PASS: ${msg}`);
-}
+describe("status parsing", () => {
+	it("parses all state fields", () => {
+		const parsed = parseStateMd(sampleState);
+		expect(parsed.milestone).toBe("v1.0");
+		expect(parsed.activePhase).toBe("03");
+		expect(parsed.currentPhaseName).toBe("Auth refactor");
+		expect(parsed.currentPlan).toBe("03-01");
+		expect(parsed.activeWorkstream).toBe("WS-001");
+		expect(parsed.status).toBe("executing");
+		expect(parsed.percent).toBe(40);
+		expect(parsed.nextAction).toBe("execute-phase");
+		expect(parsed.nextPhases).toEqual(["3"]);
+	});
 
-console.log("--- status parsing tests ---");
-const parsed = parseStateMd(sampleState);
-assertEqual(parsed.milestone, "v1.0", "parses milestone");
-assertEqual(parsed.activePhase, "03", "parses active_phase");
-assertEqual(
-	parsed.currentPhaseName,
-	"Auth refactor",
-	"parses current_phase_name",
-);
-assertEqual(parsed.currentPlan, "03-01", "parses current_plan");
-assertEqual(parsed.activeWorkstream, "WS-001", "parses active_workstream");
-assertEqual(parsed.status, "executing", "parses status");
-assertEqual(parsed.percent, 40, "parses nested progress.percent");
-assertEqual(parsed.nextAction, "execute-phase", "parses next_action");
-assertEqual(parsed.nextPhases, ["3"], "parses next_phases");
+	it("formats active status", () => {
+		const parsed = parseStateMd(sampleState);
+		const formatted = formatStatus(parsed);
+		expect(formatted).toContain("v1.0");
+		expect(formatted).toContain("Phase 03");
+		expect(formatted).toContain("Auth refactor");
+		expect(formatted).toContain("executing");
+		expect(formatted).toContain("Plan 03-01");
+		expect(formatted).toContain("WS-001");
+		expect(formatted).toContain("40%");
+	});
 
-console.log("\n--- status formatting tests ---");
-const formatted = formatStatus(parsed);
-console.log("formatted:", formatted);
-assertTrue(formatted.includes("v1.0"), "includes milestone");
-assertTrue(formatted.includes("Phase 03"), "includes phase number");
-assertTrue(formatted.includes("Auth refactor"), "includes phase name");
-assertTrue(formatted.includes("executing"), "includes status");
-assertTrue(formatted.includes("Plan 03-01"), "includes current plan");
-assertTrue(formatted.includes("WS-001"), "includes active workstream");
-assertTrue(formatted.includes("40%"), "includes progress percent");
-
-const idleState = parseStateMd(`---
+	it("formats idle status", () => {
+		const idleState = parseStateMd(`---
 milestone: v2.0
 status: idle
 active_phase: null
@@ -100,26 +80,32 @@ progress:
 ---
 # State
 `);
-const idleFormatted = formatStatus(idleState);
-console.log("idle formatted:", idleFormatted);
-assertTrue(idleFormatted.includes("v2.0"), "idle includes milestone");
-assertTrue(
-	idleFormatted.includes("next begin-phase 4"),
-	"idle shows next action",
-);
+		const idleFormatted = formatStatus(idleState);
+		expect(idleFormatted).toContain("v2.0");
+		expect(idleFormatted).toContain("next begin-phase 4");
+	});
+});
 
-console.log("\n--- findGsdRoot tests ---");
-const tmp = path.join(process.cwd(), `.tmp-hooks-status-test-${Date.now()}`);
-fs.mkdirSync(path.join(tmp, ".planning"), { recursive: true });
-fs.writeFileSync(path.join(tmp, ".planning", "STATE.md"), sampleState, "utf8");
-const nested = path.join(tmp, "src", "components");
-fs.mkdirSync(nested, { recursive: true });
-assertEqual(findGsdRoot(nested), tmp, "finds GSD root from nested dir");
-assertEqual(
-	findGsdRoot("/nonexistent/path/that/should/not/exist"),
-	null,
-	"returns null when no GSD root",
-);
-fs.rmSync(tmp, { recursive: true, force: true });
+describe("findGsdRoot", () => {
+	let tmp: string;
 
-console.log("\nAll status tests passed.");
+	beforeEach(() => {
+		tmp = createTempRepo();
+		fs.mkdirSync(path.join(tmp, ".planning"), { recursive: true });
+		fs.writeFileSync(path.join(tmp, ".planning", "STATE.md"), sampleState, "utf8");
+	});
+
+	afterEach(() => {
+		fs.rmSync(tmp, { recursive: true, force: true });
+	});
+
+	it("finds GSD root from nested dir", () => {
+		const nested = path.join(tmp, "src", "components");
+		fs.mkdirSync(nested, { recursive: true });
+		expect(findGsdRoot(nested)).toBe(tmp);
+	});
+
+	it("returns null when no GSD root", () => {
+		expect(findGsdRoot("/nonexistent/path/that/should/not/exist")).toBeNull();
+	});
+});

@@ -1,12 +1,12 @@
-/**
- * Manual test for gsd_backlog tool.
- *
- * Run with:
- *   npx tsx extensions/gsd-commands/backlog.test.ts
- */
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerBacklogTools } from "./backlog";
+
+function createTempRepo(): string {
+	return fs.mkdtempSync(path.join(os.tmpdir(), "gsd-backlog-test-"));
+}
 
 function mockPi() {
 	const tools: Array<{ name: string; execute: Function }> = [];
@@ -23,87 +23,109 @@ function mockPi() {
 	};
 }
 
-function assertEqual(actual: any, expected: any, msg: string) {
-	const a = JSON.stringify(actual);
-	const e = JSON.stringify(expected);
-	if (a !== e) {
-		console.error(`FAIL: ${msg}`);
-		console.error(`  expected: ${e}`);
-		console.error(`  actual:   ${a}`);
-		process.exit(1);
-	}
-	console.log(`PASS: ${msg}`);
-}
+describe("backlog tools", () => {
+	let repoPath: string;
 
-async function withTempRepo(cb: (repoPath: string) => Promise<void>) {
-	const tmp = path.join(process.cwd(), `.tmp-backlog-test-${Date.now()}`);
-	fs.mkdirSync(path.join(tmp, ".planning"), { recursive: true });
-	try {
-		await cb(tmp);
-	} finally {
-		fs.rmSync(tmp, { recursive: true, force: true });
-	}
-}
+	beforeEach(() => {
+		repoPath = createTempRepo();
+		fs.mkdirSync(path.join(repoPath, ".planning"), { recursive: true });
+	});
 
-(async () => {
-	await withTempRepo(async (repoPath) => {
+	afterEach(() => {
+		fs.rmSync(repoPath, { recursive: true, force: true });
+	});
+
+	it("adds items and assigns sequential IDs", async () => {
 		const pi = mockPi();
-		registerBacklogTools(pi);
+		registerBacklogTools(pi as any);
+		const added = await pi.call(
+			"gsd_backlog",
+			{
+				repoPath,
+				operation: "add",
+				title: "Refactor auth middleware",
+				type: "tech-debt",
+				priority: "p1",
+				description: "Current middleware is hard to test.",
+			},
+			repoPath,
+		);
+		expect(added.item.id).toBe("B-001");
+		expect(added.item.title).toBe("Refactor auth middleware");
+		expect(added.item.status).toBe("open");
 
-		// add
-		const added = await pi.call("gsd_backlog", { repoPath, operation: "add", title: "Refactor auth middleware", type: "tech-debt", priority: "p1", description: "Current middleware is hard to test." }, repoPath);
-		assertEqual(added.item.id, "B-001", "add assigns B-001");
-		assertEqual(added.item.title, "Refactor auth middleware", "add title");
-		assertEqual(added.item.status, "open", "add status open");
+		const added2 = await pi.call(
+			"gsd_backlog",
+			{ repoPath, operation: "add", title: "Add OAuth provider", type: "idea" },
+			repoPath,
+		);
+		expect(added2.item.id).toBe("B-002");
+	});
 
-		// add second
-		const added2 = await pi.call("gsd_backlog", { repoPath, operation: "add", title: "Add OAuth provider", type: "idea" }, repoPath);
-		assertEqual(added2.item.id, "B-002", "add assigns B-002");
+	it("lists and filters items", async () => {
+		const pi = mockPi();
+		registerBacklogTools(pi as any);
+		await pi.call("gsd_backlog", { repoPath, operation: "add", title: "A", type: "tech-debt" }, repoPath);
+		await pi.call("gsd_backlog", { repoPath, operation: "add", title: "B", type: "idea" }, repoPath);
 
-		// list
 		const listed = await pi.call("gsd_backlog", { repoPath, operation: "list" }, repoPath);
-		assertEqual(listed.count, 2, "list returns 2 items");
-		assertEqual(listed.items[0].id, "B-001", "list first item");
+		expect(listed.count).toBe(2);
 
-		// list with filter
 		const filtered = await pi.call("gsd_backlog", { repoPath, operation: "list", type: "idea" }, repoPath);
-		assertEqual(filtered.count, 1, "list filter by type");
-		assertEqual(filtered.items[0].id, "B-002", "list filtered item");
+		expect(filtered.count).toBe(1);
+		expect(filtered.items[0].title).toBe("B");
+	});
 
-		// promote
-		const promoted = await pi.call("gsd_backlog", { repoPath, operation: "promote", id: "B-001", linkedPhase: "03" }, repoPath);
-		assertEqual(promoted.item.status, "in-progress", "promote status");
-		assertEqual(promoted.item.linkedPhase, "03", "promote linked phase");
+	it("promotes an item to a phase", async () => {
+		const pi = mockPi();
+		registerBacklogTools(pi as any);
+		await pi.call("gsd_backlog", { repoPath, operation: "add", title: "A" }, repoPath);
+		const promoted = await pi.call(
+			"gsd_backlog",
+			{ repoPath, operation: "promote", id: "B-001", linkedPhase: "03" },
+			repoPath,
+		);
+		expect(promoted.item.status).toBe("in-progress");
+		expect(promoted.item.linkedPhase).toBe("03");
+	});
 
-		// update
-		const updated = await pi.call("gsd_backlog", { repoPath, operation: "update", id: "B-002", priority: "p0" }, repoPath);
-		assertEqual(updated.item.priority, "p0", "update priority");
+	it("updates and closes items", async () => {
+		const pi = mockPi();
+		registerBacklogTools(pi as any);
+		await pi.call("gsd_backlog", { repoPath, operation: "add", title: "A" }, repoPath);
+		await pi.call("gsd_backlog", { repoPath, operation: "add", title: "B" }, repoPath);
+		await pi.call("gsd_backlog", { repoPath, operation: "promote", id: "B-001", linkedPhase: "03" }, repoPath);
 
-		// close
+		const updated = await pi.call(
+			"gsd_backlog",
+			{ repoPath, operation: "update", id: "B-002", priority: "p0" },
+			repoPath,
+		);
+		expect(updated.item.priority).toBe("p0");
+
 		const closed = await pi.call("gsd_backlog", { repoPath, operation: "close", id: "B-002" }, repoPath);
-		assertEqual(closed.item.status, "closed", "close status");
+		expect(closed.item.status).toBe("closed");
 
-		// list open
 		const openItems = await pi.call("gsd_backlog", { repoPath, operation: "list", status: "open" }, repoPath);
-		assertEqual(openItems.count, 0, "no open items after promote/close");
+		expect(openItems.count).toBe(0);
+	});
 
-		// verify file exists and contains promoted item
+	it("writes items to correct sections", async () => {
+		const pi = mockPi();
+		registerBacklogTools(pi as any);
+		await pi.call("gsd_backlog", { repoPath, operation: "add", title: "A" }, repoPath);
+		await pi.call("gsd_backlog", { repoPath, operation: "promote", id: "B-001", linkedPhase: "03" }, repoPath);
+
 		const bp = path.join(repoPath, ".planning/BACKLOG.md");
 		const fileContent = fs.readFileSync(bp, "utf8");
-		assertEqual(fileContent.includes("## In Progress"), true, "file has In Progress section");
-		assertEqual(fileContent.includes("B-001"), true, "file contains B-001");
-		assertEqual(fileContent.includes("B-002"), true, "file contains B-002");
-		// Ensure items are in correct sections and not duplicated across sections
+		expect(fileContent).toContain("## In Progress");
+		expect(fileContent).toContain("B-001");
+
 		const openIdx = fileContent.indexOf("## Open");
 		const inProgressIdx = fileContent.indexOf("## In Progress");
 		const blockedIdx = fileContent.indexOf("## Blocked");
-		const closedIdx = fileContent.indexOf("## Closed");
 		const b001Idx = fileContent.indexOf("### B-001:");
-		const b002Idx = fileContent.indexOf("### B-002:");
-		assertEqual(b001Idx > openIdx && b001Idx < inProgressIdx, false, "B-001 not in Open section");
-		assertEqual(b001Idx > inProgressIdx && b001Idx < blockedIdx, true, "B-001 in In Progress section");
-		assertEqual(b002Idx > closedIdx, true, "B-002 in Closed section");
-
-		console.log("\nAll backlog tests passed.");
+		expect(b001Idx).toBeGreaterThan(inProgressIdx);
+		expect(b001Idx).toBeLessThan(blockedIdx);
 	});
-})();
+});

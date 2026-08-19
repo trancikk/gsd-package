@@ -2,20 +2,46 @@
   "name": "gsd-core",
   "version": "0.1.0",
   "description": "GSD Core for pi — phase-loop workflow, spec-driven development, and context engineering",
-  "keywords": ["pi-package", "gsd", "workflow", "spec-driven"],
+  "keywords": [
+    "pi-package",
+    "gsd",
+    "workflow",
+    "spec-driven"
+  ],
   "license": "MIT",
   "pi": {
-    "extensions": ["./extensions/gsd-hooks/index.ts", "./extensions/gsd-commands/index.ts", "./extensions/gsd-save-response/index.ts"],
-    "skills": ["./skills"],
-    "prompts": ["./prompts"]
+    "extensions": [
+      "./extensions/gsd-hooks/index.ts",
+      "./extensions/gsd-commands/index.ts",
+      "./extensions/gsd-save-response/index.ts"
+    ],
+    "skills": [
+      "./skills"
+    ],
+    "prompts": [
+      "./prompts"
+    ]
   },
   "pi-subagents": {
-    "agents": ["./agents"]
+    "agents": [
+      "./agents"
+    ]
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check extensions agents",
+    "lint:fix": "biome check extensions agents --write"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.9",
     "@earendil-works/pi-agent-core": "^0.84.2",
     "@earendil-works/pi-coding-agent": "^0.84.2",
+    "@vitest/coverage-v8": "^4.1.11",
     "tsx": "^4.23.12",
-    "typebox": "^1.3.15"
+    "typebox": "^1.3.15",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   }
 }
