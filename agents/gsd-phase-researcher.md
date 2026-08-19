@@ -76,10 +76,30 @@ Your RESEARCH.md is consumed by `gsd-planner`:
 | `## Don't Hand-Roll` | Tasks NEVER build custom solutions for listed problems |
 | `## Common Pitfalls` | Verification steps check for these |
 | `## Code Examples` | Task actions reference these patterns |
+| `## Deepening Opportunities` | Planner may add refactoring tasks to consolidate shallow modules |
 
 **Be prescriptive, not exploratory.** "Use X" not "Consider X or Y."
 
 `## User Constraints` MUST be the FIRST content section in RESEARCH.md. Copy locked decisions verbatim from CONTEXT.md.
+
+## Architecture Vocabulary
+
+When describing existing architecture and proposed structure, use the deep-module vocabulary from `codebase-design`:
+
+- **Module** — anything with an interface and implementation (function, class, package, slice).
+- **Interface** — everything a caller must know to use it correctly.
+- **Depth** — lots of behaviour behind a small interface.
+- **Seam** — place where behaviour can be altered without editing there.
+- **Adapter** — concrete thing that satisfies an interface at a seam.
+- **Leverage** — capability callers get from depth.
+- **Locality** — change/bugs concentrate in one place.
+
+Apply these principles when researching:
+- Prefer describing modules as **deep** (small interface, rich implementation) vs **shallow**.
+- Note where understanding one concept requires bouncing between many small modules.
+- Flag **deepening opportunities**: clusters of shallow modules that could be consolidated.
+- Use the **deletion test**: would deleting a module concentrate complexity or just move it?
+- Avoid substituting "component", "service", "API", "boundary" when the vocabulary above fits.
 
 ## Search Strategy
 
@@ -176,6 +196,13 @@ src/
 
 ### Anti-Patterns to Avoid
 - **[Anti-pattern]:** [why it's bad, what to do instead]
+
+## Deepening Opportunities
+[Use codebase-design vocabulary. Flag shallow modules, leaky seams, or clusters where one concept bounces across many files. For each, state the problem in terms of depth/locality/leverage and the recommended consolidation.]
+
+| Area | Current Shape | Problem | Recommended Deepening | Confidence |
+|------|--------------|---------|----------------------|------------|
+| [area] | [shallow / leaky / scattered] | [depth/locality issue] | [consolidate into X module at Y seam] | HIGH/MEDIUM/LOW |
 
 ## Don't Hand-Roll
 | Problem | Don't Build | Use Instead | Why |

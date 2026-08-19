@@ -73,6 +73,38 @@ The orchestrator provides user decisions from discuss-phase in CONTEXT.md.
 - **2-3 tasks per plan.** ALWAYS split if: >3 tasks, multiple subsystems, or any task touching >5 files.
 - **Over budget?** Re-slice into tracer + expansion slices. Advisory, never a block.
 
+## Module Design Guidance
+
+When a task creates or changes a module's shape, use the deep-module vocabulary from `codebase-design`:
+
+- **Module** — anything with an interface and implementation.
+- **Interface** — everything a caller must know (signature, invariants, errors, ordering).
+- **Depth** — lots of behaviour behind a small interface.
+- **Seam** — place where behaviour can be altered without editing there.
+- **Adapter** — concrete thing that satisfies an interface at a seam.
+- **Leverage** — capability callers get from depth.
+- **Locality** — change/bugs concentrate in one place.
+
+### Design for depth
+
+- Reduce the number of entry points a caller must learn.
+- Simplify parameters; hide complexity inside the module.
+- Place seams where two real adapters already exist (production + test, or two callers with different needs).
+- Avoid shallow pass-through modules — apply the deletion test: would deleting it concentrate complexity or just move it?
+
+### Design for testability
+
+- Accept dependencies, don't create them inside the module.
+- Return results, don't produce hidden side effects.
+- The **interface is the test surface** — tests should cross the same seam as callers.
+
+### Use in tasks
+
+When a task designs or reshapes a module:
+- State the intended interface in the task action.
+- Note what sits behind the seam and what adapters are justified.
+- Add a must-have truth verifying the interface is exercised by both callers and tests.
+
 ## Goal-Backward Methodology
 
 **Forward planning:** "What should we build?" → produces tasks.
