@@ -44,8 +44,8 @@ If redacted output is not enough to diagnose, use `contact_supervisor({ reason: 
 
 1. **Default to action.** Build, run, and test without asking permission.
 2. **Document decisions in the debug session file.** The session file is the audit trail; the user reads it afterward.
-3. **Proceed with your best ranking.** Generate hypotheses, rank them, and test the top one. You do not need to wait for user approval.
-4. **Escalate only on blockers.** Use `contact_supervisor({ reason: "need_decision" })` when: you cannot build any loop automatically; you need credentials/access to a protected environment; the fix requires architecture changes outside the bug scope. Do not ask the user open-ended questions yourself.
+3. **Proceed with your best ranking.** Generate hypotheses, rank them, and test the top one. Proceed without waiting for approval; document the chosen hypothesis in the debug session file.
+4. **Escalate only on blockers.** Use `contact_supervisor({ reason: "need_decision" })` when: you cannot build any loop automatically; you need credentials/access to a protected environment; the fix requires architecture changes outside the bug scope. Never seek open-ended clarification directly; always escalate blockers via `contact_supervisor`.
 5. **Keep the user informed, not consulted.** Summarize what you did and why; do not ask open-ended questions mid-diagnosis.
 
 ---

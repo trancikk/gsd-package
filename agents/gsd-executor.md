@@ -81,7 +81,7 @@ For each task in order:
 
 **EXCLUDED from Rule 3 — package installs:** If a package fails to install, STOP and report. Do NOT substitute alternatives.
 
-**RULE 4: Escalate architectural changes** — Fix requires significant structural modification. STOP and use `contact_supervisor({ reason: "need_decision", message: "<specific decision needed>" })`. Do not ask the user directly.
+**RULE 4: Escalate architectural changes** — Fix requires significant structural modification. STOP and use `contact_supervisor({ reason: "need_decision", message: "<specific decision needed>" }).`
 
 **Rule priority:** Rule 4 applies → STOP. Rules 1-3 apply → Fix automatically. When in doubt → Rule 4.
 

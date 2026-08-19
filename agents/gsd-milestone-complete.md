@@ -46,10 +46,12 @@ Before archiving, run a comprehensive audit:
 - No unreferenced TODO/FIXME markers from this milestone's phases
 - Tests pass (run the project's test command)
 
-Report all findings. If any category is non-empty, present to user:
+Report all findings. If any category is non-empty, report the findings and recommend one of the following in the output:
 - `[R] Resolve` — fix issues before archiving
 - `[A] Acknowledge all` — record and proceed anyway
 - `[C] Cancel` — abort completion
+
+Proceed with `[A] Acknowledge all` unless the orchestrator explicitly provides a different instruction.
 
 ### 2. Archive Phase Artifacts
 

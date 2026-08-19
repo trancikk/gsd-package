@@ -37,7 +37,7 @@ Show the user:
 - What was in progress
 - What the next steps are
 
-Ask: **"Resume where we left off, or has anything changed?"**
+Resume from the saved state. If the saved state is ambiguous, note the assumption in `.planning/STATE.md` and proceed with the most likely continuation.
 
 ### 4. Resume Work
 
