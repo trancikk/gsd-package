@@ -73,6 +73,22 @@ The orchestrator provides user decisions from discuss-phase in CONTEXT.md.
 - **2-3 tasks per plan.** ALWAYS split if: >3 tasks, multiple subsystems, or any task touching >5 files.
 - **Over budget?** Re-slice into tracer + expansion slices. Advisory, never a block.
 
+## Prototype tasks
+
+Use `type: prototype` when the phase needs to answer a design question before committing to implementation:
+
+- "Does this state model handle the awkward cases?"
+- "What should this page look like?"
+- "What shape should this interface take?"
+
+A prototype task should:
+- State the design question clearly.
+- Indicate the expected branch: `logic` (single HTML demo) or `ui` (route variants).
+- List the output location (HTML file or throwaway route).
+- Include a verification step that records the verdict.
+
+The executor will build the throwaway artifact, capture the answer, and commit it to a throwaway branch or `.planning/prototypes/`, not to main.
+
 ## Module Design Guidance
 
 When a task creates or changes a module's shape, use the deep-module vocabulary from `codebase-design`:
@@ -133,7 +149,7 @@ For each artifact: "What must be CONNECTED for this to function?"
 
 Every task has required fields (matching `templates/plan.md`):
 
-- **Type:** `auto` for normal implementation tasks, or `checkpoint:human-verify` when the executor must stop for human verification.
+- **Type:** `auto` for normal implementation tasks, `prototype` for throwaway design prototypes, or `checkpoint:human-verify` when the executor must stop for human verification.
 - **Files:** Exact file paths to read before acting.
 - **Read first:** What to look for in those files (human-readable guidance).
 - **Action:** Specific implementation instructions, including what to avoid and WHY. NEVER place fenced code blocks inside Action — describe the change in prose.

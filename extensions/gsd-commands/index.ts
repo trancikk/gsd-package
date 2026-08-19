@@ -394,6 +394,165 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
+	pi.registerTool({
+		name: "gsd_prototype",
+		label: "GSD Prototype",
+		description:
+			"Prepare the subagent call for gsd-prototype to build a throwaway prototype and write PROTOTYPE.md.",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description:
+					"Path to the repo (absolute or relative to session cwd)",
+			}),
+			question: Type.String({
+				description:
+					"The design question the prototype should answer",
+			}),
+			outputPath: Type.String({
+				description:
+					"Path for PROTOTYPE.md (absolute or relative to session cwd)",
+			}),
+		}),
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
+			const task = [
+				"Build a throwaway prototype to answer a design question and write PROTOTYPE.md.",
+				``,
+				`Repo: ${repoPath}`,
+				`Question: ${params.question}`,
+				`Output (absolute path): ${outputPath}`,
+				``,
+				"Determine whether the question is about logic/state (build a single shareable HTML file) or UI/layout (generate variants on a route).",
+				"Write the prototype artifact and the PROTOTYPE.md summary to the absolute output path using the write tool.",
+				"Create parent directories with bash (mkdir -p) if needed.",
+				"Verify the files exist with ls -la before returning.",
+			].join("\n");
+			const call = buildSubagentCall(
+				"gsd-prototype",
+				"prototype-design",
+				task,
+				outputPath,
+			);
+			return buildToolResult(call, outputPath, repoPath);
+		},
+	});
+
+	pi.registerTool({
+		name: "gsd_arch_review",
+		label: "GSD Architecture Review",
+		description:
+			"Prepare the subagent call for gsd-arch-review to produce an HTML architecture review and ARCHITECTURE-REVIEW.md.",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description:
+					"Path to the repo (absolute or relative to session cwd)",
+			}),
+			scope: Type.Optional(
+				Type.String({
+					description:
+						"Optional module, subsystem, or pain point to focus on",
+				}),
+			),
+			outputPath: Type.String({
+				description:
+					"Path for ARCHITECTURE-REVIEW.md (absolute or relative to session cwd)",
+			}),
+		}),
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
+			const task = [
+				"Scan the codebase for architectural deepening opportunities and produce an HTML report plus ARCHITECTURE-REVIEW.md.",
+				``,
+				`Repo: ${repoPath}`,
+				`Scope: ${params.scope || "infer from recent commits"}`,
+				`Output (absolute path): ${outputPath}`,
+				``,
+				"Use the codebase-design deep-module vocabulary. Write the HTML report to the OS temp directory and the summary to the absolute output path.",
+				"Create parent directories with bash (mkdir -p) if needed.",
+				"Verify the files exist with ls -la before returning.",
+			].join("\n");
+			const call = buildSubagentCall(
+				"gsd-arch-review",
+				"architecture-review",
+				task,
+				outputPath,
+			);
+			return buildToolResult(call, outputPath, repoPath);
+		},
+	});
+
+	pi.registerTool({
+		name: "gsd_grill",
+		label: "GSD Grill",
+		description:
+			"Prepare the subagent call for gsd-grill to run a relentless round-based interview and produce GRILL.md.",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description:
+					"Path to the repo (absolute or relative to session cwd)",
+			}),
+			topic: Type.String({
+				description: "The plan, design, or decision to grill",
+			}),
+			outputPath: Type.String({
+				description:
+					"Path for GRILL.md (absolute or relative to session cwd)",
+			}),
+		}),
+		async execute(
+			_id,
+			params,
+			_signal,
+			_onUpdate,
+			ctx,
+		): Promise<AgentToolResult> {
+			const { repoPath, outputPath } = resolveAndEnsure(
+				params.repoPath,
+				params.outputPath,
+				ctx,
+			);
+			const task = [
+				"Run a relentless round-based interview to sharpen a plan, design, or decision. Write GRILL.md.",
+				``,
+				`Repo: ${repoPath}`,
+				`Topic: ${params.topic}`,
+				`Output (absolute path): ${outputPath}`,
+				``,
+				"Map the topic as a design tree, work the frontier in rounds, look up facts with tools instead of asking the user, and update CONTEXT.md/ADRs as terms resolve.",
+				"Write the complete GRILL.md to the absolute output path using the write tool.",
+				"Create parent directories with bash (mkdir -p) if needed.",
+				"Verify the file exists with ls -la before returning.",
+			].join("\n");
+			const call = buildSubagentCall(
+				"gsd-grill",
+				"grill-session",
+				task,
+				outputPath,
+			);
+			return buildToolResult(call, outputPath, repoPath);
+		},
+	});
+
 	registerStateTools(pi);
 	registerBacklogTools(pi);
 	registerWorkstreamTools(pi);

@@ -344,6 +344,9 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | Writing docs for agents | `write-for-agents` skill — `/skill:write-for-agents` (user-invoked) |
 | Stress-test a plan/decision | `grill-me` skill — `/skill:grill-me` (user-invoked) |
 | Re-pitch a confusing message | `wait-what` skill — `/skill:wait-what` (user-invoked) |
+| Throwaway prototype command | `/gsd-prototype` tool + `gsd-prototype` agent |
+| Architecture review command | `/gsd-arch-review` tool + `gsd-arch-review` agent |
+| Round-based grill command | `/gsd-grill` tool + `gsd-grill` agent |
 | Teach a topic in the workspace | `teach` skill — `/skill:teach` (user-invoked) |
 | Improve codebase architecture | `improve-codebase-arch` skill — `/skill:improve-codebase-arch` (user-invoked) |
 | Deep-module design vocabulary | `codebase-design` skill — `/skill:codebase-design` (user-invoked) |

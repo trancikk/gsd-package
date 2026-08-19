@@ -232,9 +232,9 @@ Use **Approach B** for vocabulary/skills that should become part of agent behavi
 
 ### Phase 2 — New commands
 
-6. Add `/gsd-prototype` command and `prototype` task type.
-7. Add `/gsd-arch-review` command.
-8. Add `/gsd-grill` deep-round command.
+6. ✅ Add `/gsd-prototype` command and `prototype` task type.
+7. ✅ Add `/gsd-arch-review` command.
+8. ✅ Add `/gsd-grill` deep-round command.
 
 ### Phase 3 — Quality + documentation
 

@@ -58,11 +58,18 @@ For each task in order:
    - Confirm `**Acceptance criteria:**` are met
    - Commit immediately (see commit protocol)
 
-3. **If `type="checkpoint:human-verify"`:**
+3. **If `type="prototype"`:**
+   - Read the files listed in `**Files:**` first
+   - Build the throwaway prototype (logic HTML demo or UI route variants) per the action
+   - Do not merge the prototype into main; commit to a throwaway branch or save under `.planning/prototypes/`
+   - Record the verdict and next step in `**Verify:**`
+   - Note the prototype location in SUMMARY.md
+
+4. **If `type="checkpoint:human-verify"`:**
    - STOP immediately — return structured checkpoint message
    - A fresh agent will be spawned to continue
 
-4. **After all tasks:** run overall verification, confirm success criteria
+5. **After all tasks:** run overall verification, confirm success criteria
 
 ### Deviation Rules
 

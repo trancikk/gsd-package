@@ -129,6 +129,9 @@ GSD ships pi prompt templates in `prompts/` and typed tools via the `gsd-command
 | `/gsd-plan` / `gsd_plan` | `<repo-path> <context-files> <output-path>` | Produce PLAN.md from context/research |
 | `/gsd-execute` / `gsd_execute` | `<repo-path> <plan-path> <output-path>` | Execute a plan, produce SUMMARY.md |
 | `/gsd-verify` / `gsd_verify` | `<repo-path> <phase-dir> <output-path>` | Produce VERIFICATION.md for a phase |
+| `/gsd-prototype` / `gsd_prototype` | `<repo-path> <question> <output-path>` | Build a throwaway prototype and write PROTOTYPE.md |
+| `/gsd-arch-review` / `gsd_arch_review` | `<repo-path> <output-path> [scope]` | Produce an HTML architecture review and ARCHITECTURE-REVIEW.md |
+| `/gsd-grill` / `gsd_grill` | `<repo-path> <topic> <output-path>` | Run a round-based grill session and write GRILL.md |
 
 Use forward slashes in paths (e.g., `C:/Sources/my-project/.planning/phases/01-foo/01-RESEARCH.md`).
 
@@ -161,6 +164,8 @@ Operations beyond the core phase loop are invoked by spawning the corresponding 
 |---------|-------|-------------|
 | `quick` | `gsd-quick` | Single-task fixes: typos, missing imports, small refactors |
 | `debug` | `gsd-debug` | Disciplined 6-phase debugging: feedback loop → minimise → hypothesise → instrument → fix → verify |
+| `prototype` | `gsd-prototype` | Throwaway prototype to answer a design question |
+| `grill` | `gsd-grill` | Round-based interview to sharpen a plan or design |
 
 ### Milestone management
 
@@ -182,6 +187,7 @@ Operations beyond the core phase loop are invoked by spawning the corresponding 
 | --------- | ------- | ------------- |
 | `code-review` | `gsd-code-review` | Two-axis review: Standards (conventions + smell baseline) and Spec (plan + requirements) |
 | `security-audit` | `gsd-security-audit` | OWASP ASVS scan + threat model |
+| `arch-review` | `gsd-arch-review` | HTML architecture review of deepening opportunities |
 | `backlog` | `gsd-backlog` | Interactive backlog triage |
 | `workstream` | `gsd-workstream` | Create, switch, pause, resume, merge, close parallel feature branches |
 | `retrospective` | `gsd-retrospective` | Post-phase what went well / what didn't |

@@ -36,7 +36,7 @@ estimate:
 ## Tasks
 
 ### Task 1: [Task Name]
-- **Type:** auto
+- **Type:** auto | prototype | checkpoint:human-verify
 - **Files:** `[file:line]`, `[file:line]` — files to read before acting (fallback: use **Read first**)
 - **Read first:** `[file:line]` — [what to look for]
 - **Action:** [What to implement/change]
