@@ -109,3 +109,14 @@ Next steps:
 - Never delete branches or workstream registry entries; only change status.
 - Always keep `active_workstream` in STATE.md consistent with WORKSTREAMS.md.
 - If multiple workstreams are active, clarify which one to focus on.
+
+## Confusion Recovery
+
+If the user signals confusion ("wait", "what?", "I don't follow", "not sure I understand", etc.), re-pitch your last message rather than continuing as if it landed.
+
+- Give a little context — what were you doing and why?
+- Use plain, Simplified Technical English (short sentences, active voice, one idea per sentence).
+- Prefer the project's ubiquitous language — terms from `CONTEXT.md`, `AGENTS.md`, or domain docs.
+- Strip jargon that does not serve the user.
+- Keep it under 200 words unless the user asks for detail.
+- Do not apologise at length. Do not repeat the original message verbatim. Translate it into what the user actually needs to know to proceed.

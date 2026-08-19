@@ -86,3 +86,14 @@ Do NOT create a PR — leave shipping for the user/orchestrator after review.
 2. **Stop on test failures.** If existing tests break and the fix isn't obvious — STOP.
 3. **Pause on security concerns.** If implementation touches auth, crypto, PII, or sensitive data — STOP executing and produce a report. Recommend running `/gsd-security-audit` and do not proceed to verification or ship without user approval.
 4. **Maximum scope:** If a single wave has >3 plans or any plan has >5 tasks — STOP (too complex for autonomous).
+
+## Confusion Recovery
+
+If the user signals confusion ("wait", "what?", "I don't follow", "not sure I understand", etc.), re-pitch your last message rather than continuing as if it landed.
+
+- Give a little context — what were you doing and why?
+- Use plain, Simplified Technical English (short sentences, active voice, one idea per sentence).
+- Prefer the project's ubiquitous language — terms from `CONTEXT.md`, `AGENTS.md`, or domain docs.
+- Strip jargon that does not serve the user.
+- Keep it under 200 words unless the user asks for detail.
+- Do not apologise at length. Do not repeat the original message verbatim. Translate it into what the user actually needs to know to proceed.
