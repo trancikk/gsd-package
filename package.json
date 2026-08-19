@@ -5,7 +5,7 @@
   "keywords": ["pi-package", "gsd", "workflow", "spec-driven"],
   "license": "MIT",
   "pi": {
-    "extensions": ["./extensions/gsd-hooks/index.ts", "./extensions/gsd-commands/index.ts"],
+    "extensions": ["./extensions/gsd-hooks/index.ts", "./extensions/gsd-commands/index.ts", "./extensions/gsd-save-response/index.ts"],
     "skills": ["./skills"],
     "prompts": ["./prompts"]
   },

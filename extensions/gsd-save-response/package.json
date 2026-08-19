@@ -1,0 +1,9 @@
+{
+	"name": "gsd-save-response",
+	"version": "1.0.0",
+	"description": "Save the last assistant response to a Markdown file via /save-last",
+	"main": "index.ts",
+	"pi": {
+		"extensions": ["./index.ts"]
+	}
+}
