@@ -247,6 +247,7 @@ Use **Approach B** for vocabulary/skills that should become part of agent behavi
 ## 7. Risks and Gotchas
 
 - **User-invoked vs model-invoked tension.** The new skills are currently `disable-model-invocation: true`. Tight integration (Approach C) may require making some skills model-invokable or inlining their behavior.
+- **Agent autonomy vs interaction.** Matt Pocock skills often include user checkpoints ("show the user before testing"). GSD agents should operate autonomously by default and escalate only on genuine blockers. When inlining a skill into an agent, remove mandatory user-consultation steps and replace them with audit-trail entries in the artifact file.
 - **Context budget.** Adding vocabulary and workflow steps to every agent increases context load. Use `write-for-agents` principles to keep additions tight.
 - **Duplication drift.** If the same discipline lives in both a skill and an agent prompt, they will diverge. Prefer referencing the skill file from the agent prompt when possible.
 - **Over-integration.** Not every skill needs to be wired. `teach` and `wait-what` can remain mostly standalone.
