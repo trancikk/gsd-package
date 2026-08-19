@@ -180,7 +180,7 @@ Operations beyond the core phase loop are invoked by spawning the corresponding 
 
 | Command | Agent | When to use |
 | --------- | ------- | ------------- |
-| `code-review` | `gsd-code-review` | Review implementation against plan + requirements |
+| `code-review` | `gsd-code-review` | Two-axis review: Standards (conventions + smell baseline) and Spec (plan + requirements) |
 | `security-audit` | `gsd-security-audit` | OWASP ASVS scan + threat model |
 | `backlog` | `gsd-backlog` | Interactive backlog triage |
 | `workstream` | `gsd-workstream` | Create, switch, pause, resume, merge, close parallel feature branches |

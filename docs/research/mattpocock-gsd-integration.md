@@ -224,8 +224,8 @@ Use **Approach B** for vocabulary/skills that should become part of agent behavi
 
 ### Phase 1 — Quick wins (no new tools)
 
-1. Update `agents/gsd-debug.md` to use `diagnose-bugs` 6-phase loop.
-2. Update `agents/gsd-code-review.md` to run Standards-vs-Spec two-axis review.
+1. ✅ Update `agents/gsd-debug.md` to use `diagnose-bugs` 6-phase loop.
+2. ✅ Update `agents/gsd-code-review.md` to run Standards-vs-Spec two-axis review.
 3. Add `codebase-design` vocabulary to `agents/gsd-planner.md` and `agents/gsd-phase-researcher.md`.
 4. Add `domain-modeling` discipline to `agents/gsd-discuss.md`.
 5. Add recovery guidance from `wait-what` to all agent prompts.
