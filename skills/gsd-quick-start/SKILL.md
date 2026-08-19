@@ -84,4 +84,5 @@ Once `CONTEXT.md` exists, move to planning:
 gsd_next_action({ repoPath: 'C:/Sources/my-project' })
 ```
 
-For the full canonical reference, open [gsd-phase-loop](../gsd-phase-loop/SKILL.md).
+- For the full canonical reference, open [gsd-phase-loop](../gsd-phase-loop/SKILL.md).
+- For a state-to-action lookup, open [gsd-decision-helper](../gsd-decision-helper/SKILL.md).

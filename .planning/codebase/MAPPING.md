@@ -64,7 +64,7 @@ gsd-package/
 ├── skills/                       # pi skills (user-invoked)
 │   ├── gsd-phase-loop/           # Core workflow skill
 │   └── <matt-pocock-skills>/     # Adopted helper skills
-├── gsd-resolve.sh                # Legacy gsd-tools.cjs resolver (unused by pi)
+├── legacy/                       # Archived or superseded artifacts
 ├── package.json                  # pi package manifest
 └── README.md                     # Feature inventory and usage
 ```
@@ -174,7 +174,7 @@ gsd-package/
 | --- | ------- | ---------- | ---------------- |
 | H1 | **No automated test runner or CI.** Tests are manual `npx tsx *.test.ts` scripts. | `extensions/gsd-commands/*.test.ts`, `extensions/gsd-hooks/status.test.ts` | Regressions in state/backlog/workstream logic are caught only by manual runs. |
 | H2 | **Partial planning scaffold.** `.planning/` contains only `phases/02-mattpocock-gsd-adoption/`; missing `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, `STATE.md`, `CONVENTIONS.md`, `BACKLOG.md`, `WORKSTREAMS.md`, `config.json`. | `.planning/` root | The repo that ships the GSD workflow does not itself use the full GSD scaffold. State tools and hooks cannot demonstrate canonical behavior without a `STATE.md`. |
-| H3 | **Dead legacy shell script.** `gsd-resolve.sh` resolves `gsd-tools.cjs` from a classic GSD install that does not exist in this repo. | `gsd-resolve.sh` | Misleading onboarding artifact; referenced only by README as a comparison with upstream, not used by pi. |
+| H3 | ~~**Dead legacy shell script.** `gsd-resolve.sh` resolves `gsd-tools.cjs` from a classic GSD install that does not exist in this repo.~~ | ~~`gsd-resolve.sh`~~ | Resolved in Phase 03: script deleted. |
 
 ### 6.2 Medium-Severity Debt
 
@@ -264,7 +264,7 @@ extensions/
 2. **Capture existing debt** in `BACKLOG.md` — prioritize H1 (test runner) and H2 (complete scaffold).
 3. **Complete Phase 02** (`02-mattpocock-gsd-adoption`) before adding new agents/commands, since it cleans up the interactive/autonomous agent boundary.
 4. **Add a `scripts` section** to `package.json` for typecheck, lint, and test commands.
-5. **Decide** whether `gsd-resolve.sh` should be deleted or moved to a `legacy/` directory to avoid onboarding confusion.
+5. ~~**Decide** whether `gsd-resolve.sh` should be deleted or moved to a `legacy/` directory to avoid onboarding confusion.~~ (Done in Phase 03.)
 
 ---
 

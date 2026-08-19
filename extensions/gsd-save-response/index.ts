@@ -5,34 +5,29 @@
  * response to a Markdown file in the current working directory. If no file
  * name is supplied, a random name is generated automatically.
  */
+
+import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { randomUUID } from "node:crypto";
+import type { AssistantMessage } from "@earendil-works/pi-ai";
 import type {
 	ExtensionAPI,
 	ExtensionCommandContext,
 	SessionEntry,
 	SessionMessageEntry,
 } from "@earendil-works/pi-coding-agent";
-import type { AssistantMessage } from "@earendil-works/pi-ai";
 
-function isAssistantMessageEntry(
-	entry: SessionEntry,
-): entry is SessionMessageEntry & { message: AssistantMessage } {
+function isAssistantMessageEntry(entry: SessionEntry): entry is SessionMessageEntry & { message: AssistantMessage } {
 	return entry.type === "message" && entry.message.role === "assistant";
 }
 
 function extractAssistantText(message: AssistantMessage): string {
-	return message.content
-		.flatMap((block) => (block.type === "text" ? [block.text] : []))
-		.join("\n\n");
+	return message.content.flatMap((block) => (block.type === "text" ? [block.text] : [])).join("\n\n");
 }
 
 function resolveFilePath(input: string, cwd: string): string {
 	const normalized = input.replace(/\\/g, "/");
-	const resolved = path.isAbsolute(normalized)
-		? normalized
-		: path.resolve(cwd, normalized);
+	const resolved = path.isAbsolute(normalized) ? normalized : path.resolve(cwd, normalized);
 	return resolved.replace(/\\/g, "/");
 }
 
@@ -48,10 +43,7 @@ function generateFileName(): string {
 	return `response-${timestamp}-${id}.md`;
 }
 
-async function saveLastResponse(
-	args: string,
-	ctx: ExtensionCommandContext,
-): Promise<void> {
+async function saveLastResponse(args: string, ctx: ExtensionCommandContext): Promise<void> {
 	const branch = ctx.sessionManager.getBranch();
 
 	let target: AssistantMessage | undefined;
@@ -65,10 +57,7 @@ async function saveLastResponse(
 
 	if (!target) {
 		if (ctx.hasUI) {
-			ctx.ui.notify(
-				"No assistant response found in the current session.",
-				"warning",
-			);
+			ctx.ui.notify("No assistant response found in the current session.", "warning");
 		}
 		return;
 	}
@@ -76,10 +65,7 @@ async function saveLastResponse(
 	const text = extractAssistantText(target);
 	if (!text.trim()) {
 		if (ctx.hasUI) {
-			ctx.ui.notify(
-				"The last assistant response contains no text to save.",
-				"warning",
-			);
+			ctx.ui.notify("The last assistant response contains no text to save.", "warning");
 		}
 		return;
 	}
@@ -98,8 +84,7 @@ async function saveLastResponse(
 
 export default function (pi: ExtensionAPI) {
 	pi.registerCommand("save-last", {
-		description:
-			"Save the last assistant response to a Markdown file in the current directory",
+		description: "Save the last assistant response to a Markdown file in the current directory",
 		handler: saveLastResponse,
 	});
 

@@ -42,7 +42,7 @@
   - `gsd-resolve.sh` is deleted or moved to a `legacy/` directory.
 - **Depends on:** Phase 2
 - **Estimated scope:** Large
-- **Status:** In Progress
+- **Status:** Completed
 
 ---
 *Last updated: 2026-08-19*

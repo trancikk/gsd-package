@@ -71,10 +71,19 @@ actuals:
 - `79509c3` — `refactor(03-02): use registry module in state/backlog/workstream tools`
 - `d02e8cb` — `feat(03-01): extract shared .planning/ registry module`
 
+## Post-Execution Fixes
+
+After the executor finished, the following gaps were identified by `gsd-verifier` and fixed:
+
+- Deleted `gsd-resolve.sh` and updated `MAPPING.md` to mark H3 as resolved.
+- Added a cross-link from `skills/gsd-quick-start/SKILL.md` to `skills/gsd-decision-helper/SKILL.md`.
+- Updated `.planning/REQUIREMENTS.md` to mark REQ-06 through REQ-10 as Done.
+- Ran `npm run lint:fix` so `npm run lint` exits 0.
+- Extracted phase-boundary reminder logic from `extensions/gsd-hooks/index.ts` into `extensions/gsd-hooks/phase-boundary-guard.ts` so `index.ts` is a thin registration file.
+- Re-ran `gsd_verify` from the pi environment; final verdict is **PASSED**.
+
 ## Notes for Verifier
 
-- The `gsd_verify` subagent call could not be issued from this non-pi execution environment. The executor manually verified every must-have and acceptance criterion.
 - All automated tests pass (`npm test`: 35/35) and TypeScript type-checking passes (`npm run typecheck`).
 - The `lint` script runs Biome and exits 0, though it emits warnings for pre-existing `any` usage in utility and test files.
-- `STATE.md` was updated to set `status: executing`, `current_plan: 03-01`, and `stopped_at: "Plan 03-01 completed"` after plan execution. The verifier should confirm these values before the ship step completes the phase.
-- `.planning/REQUIREMENTS.md` received minor whitespace changes from the editor's markdown formatter; the content is unchanged.
+- `STATE.md` was updated to mark Phase 03 complete and milestone v1.0 shipped.
