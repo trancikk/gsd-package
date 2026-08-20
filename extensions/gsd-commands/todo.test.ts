@@ -136,7 +136,7 @@ describe("todo tools", () => {
 
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "in_progress" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "pending", to: "in_progress" },
 			repoPath,
 		);
 
@@ -169,7 +169,7 @@ describe("todo tools", () => {
 		await pi.call("gsd_todo", { repoPath, planPath, operation: "init" }, repoPath);
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "in_progress" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "pending", to: "in_progress" },
 			repoPath,
 		);
 		const result = await pi.call(
@@ -188,7 +188,7 @@ describe("todo tools", () => {
 		await pi.call("gsd_todo", { repoPath, planPath, operation: "init" }, repoPath);
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "in_progress" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "pending", to: "in_progress" },
 			repoPath,
 		);
 		const blocked = await pi.call(
@@ -223,12 +223,12 @@ describe("todo tools", () => {
 		await pi.call("gsd_todo", { repoPath, planPath, operation: "init" }, repoPath);
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "in_progress" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "pending", to: "in_progress" },
 			repoPath,
 		);
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "blocked" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "in_progress", to: "blocked" },
 			repoPath,
 		);
 		const result = await pi.call(
@@ -280,12 +280,12 @@ describe("todo tools", () => {
 		await pi.call("gsd_todo", { repoPath, planPath, operation: "init" }, repoPath);
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "in_progress" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "pending", to: "in_progress" },
 			repoPath,
 		);
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "completed" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "in_progress", to: "completed" },
 			repoPath,
 		);
 		const result = await pi.call(
@@ -342,12 +342,12 @@ describe("todo tools", () => {
 		await pi.call("gsd_todo", { repoPath, planPath, operation: "init" }, repoPath);
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "in_progress" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "pending", to: "in_progress" },
 			repoPath,
 		);
 		await pi.call(
 			"gsd_todo",
-			{ repoPath, planPath, operation: "transition", taskId: "task-1", to: "completed" },
+			{ repoPath, planPath, operation: "transition", taskId: "task-1", from: "in_progress", to: "completed" },
 			repoPath,
 		);
 		const content = fs.readFileSync(todosPath, "utf8");

@@ -30,4 +30,10 @@ Host-side tools from the `gsd-commands` extension.
 | `gsd_backlog` | `repoPath`, `operation`, `[...]` | Manage `BACKLOG.md` items |
 | `gsd_workstream` | `repoPath`, `operation`, `[...]` | Manage `WORKSTREAMS.md` and Git branches |
 
+## Todo tools
+
+| Tool | Inputs | Purpose |
+|------|--------|---------|
+| `gsd_todo` | `repoPath`, `planPath`, `operation`, `[...]` | Manage per-plan `TODOS.md` task FSM |
+
 All tools accept absolute paths or paths relative to the session cwd.

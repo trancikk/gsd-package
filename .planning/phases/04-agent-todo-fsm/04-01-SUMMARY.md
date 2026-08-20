@@ -22,12 +22,14 @@ Implemented a per-plan todo-list FSM for the GSD workflow, centered on a new hos
 - **`agents/gsd-verifier.md`** — Updated to cross-check `TODOS.md` against `PLAN.md` tasks.
 - **`skills/gsd-phase-loop/templates/conventions.md`** — Added `TODOS.md` to artifact list and registry-file rule.
 - **`skills/gsd-phase-loop/references/artifact-index.md`** — Added `TODOS.md` to phase artifact tree and read order.
+- **`skills/gsd-phase-loop/references/tool-matrix.md`** — Added `gsd_todo` to the tool matrix.
 - **`extensions/gsd-commands/state.ts`** — `gsd_state_update` now accepts array values; `gsd_state_advance` auto-recalculates progress on `complete-phase`/`complete-plan`.
 - **`extensions/gsd-commands/state.test.ts`** — Added test for array-valued `gsd_state_update`.
 
 ## Deviations from Plan
 
 - The initial subagent execution failed with a connection error after partial progress. The remaining work (tool registration, agent/skill updates, state array fix, and final integration) was completed in the orchestrator turn.
+- `gsd_todo` transitions now require a `from` state, strengthening stale-update detection beyond the original plan wording.
 - `gsd_todo` uses `repoPath` + `planPath` parameters rather than deriving `repoPath` from `planPath`; this matches the pattern used by other GSD tools.
 
 ## Acceptance Self-Check

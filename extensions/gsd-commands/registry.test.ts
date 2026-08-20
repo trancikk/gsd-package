@@ -95,7 +95,7 @@ describe("registry", () => {
 			fs.mkdirSync(phaseDir, { recursive: true });
 			fs.writeFileSync(path.join(phaseDir, "01-01-PLAN.md"), "# plan", "utf8");
 			fs.writeFileSync(path.join(phaseDir, "01-01-SUMMARY.md"), "# summary", "utf8");
-			fs.writeFileSync(path.join(phaseDir, "01-auth-VERIFICATION.md"), "# verification", "utf8");
+			fs.writeFileSync(path.join(phaseDir, "01-VERIFICATION.md"), "# verification", "utf8");
 
 			const phases = listPhases(repoPath);
 			expect(phases).toHaveLength(1);

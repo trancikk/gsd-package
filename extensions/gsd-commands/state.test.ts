@@ -144,7 +144,7 @@ describe("state tools", () => {
 		fs.mkdirSync(phaseDir, { recursive: true });
 		fs.writeFileSync(path.join(phaseDir, "01-01-PLAN.md"), "# plan", "utf8");
 		fs.writeFileSync(path.join(phaseDir, "01-01-SUMMARY.md"), "# summary", "utf8");
-		fs.writeFileSync(path.join(phaseDir, "01-auth-VERIFICATION.md"), "# verification", "utf8");
+		fs.writeFileSync(path.join(phaseDir, "01-VERIFICATION.md"), "# verification", "utf8");
 
 		const progress = await pi.call("gsd_state_progress", { repoPath }, repoPath);
 		expect(progress.progress.total_phases).toBe(1);
@@ -171,7 +171,7 @@ describe("state tools", () => {
 		fs.mkdirSync(phaseDir, { recursive: true });
 		fs.writeFileSync(path.join(phaseDir, "01-01-PLAN.md"), "# plan", "utf8");
 		fs.writeFileSync(path.join(phaseDir, "01-01-SUMMARY.md"), "# summary", "utf8");
-		fs.writeFileSync(path.join(phaseDir, "01-auth-VERIFICATION.md"), "# verification", "utf8");
+		fs.writeFileSync(path.join(phaseDir, "01-VERIFICATION.md"), "# verification", "utf8");
 
 		await pi.call("gsd_state_advance", { repoPath, operation: "begin-phase", phase: 1, phaseName: "Auth" }, repoPath);
 		const phaseDone = await pi.call("gsd_state_advance", { repoPath, operation: "complete-phase", phase: 1 }, repoPath);

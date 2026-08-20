@@ -342,22 +342,25 @@ export function registerTodoTools(pi: ExtensionAPI) {
 				}
 
 				if (params.operation === "transition") {
+					if (!params.from) {
+						return buildToolResultText({ ok: false, error: "from is required for transition" });
+					}
 					if (!params.to) {
 						return buildToolResultText({ ok: false, error: "to is required for transition" });
 					}
 					if (!isState(params.to)) {
 						return buildToolResultText({ ok: false, error: `Invalid target state: ${params.to}` });
 					}
-					if (params.from !== undefined && params.from !== task.state) {
-						return buildToolResultText({
-							ok: false,
-							error: `Stale from state: expected ${task.state}, got ${params.from}`,
-						});
-					}
 					if (isTerminal(task.state)) {
 						return buildToolResultText({
 							ok: false,
 							error: `Cannot transition from terminal state ${task.state}`,
+						});
+					}
+					if (params.from !== task.state) {
+						return buildToolResultText({
+							ok: false,
+							error: `Stale from state: expected ${task.state}, got ${params.from}`,
 						});
 					}
 					const allowed = validTransitions(task.state);

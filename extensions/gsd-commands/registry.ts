@@ -145,7 +145,7 @@ export function listPhases(repoPath: string): PhaseMetadata[] {
 			const files = fs.readdirSync(phasePath, { withFileTypes: true });
 			const plans = files.filter((f) => f.isFile() && /^\d{2}-\d{2}-PLAN\.md$/.test(f.name)).length;
 			const summaries = files.filter((f) => f.isFile() && /^\d{2}-\d{2}-SUMMARY\.md$/.test(f.name)).length;
-			const hasVerification = files.some((f) => f.isFile() && f.name === `${d.name}-VERIFICATION.md`);
+			const hasVerification = files.some((f) => f.isFile() && f.name === `${num}-VERIFICATION.md`);
 			return {
 				num,
 				slug,
