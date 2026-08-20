@@ -185,6 +185,21 @@ describe("state tools", () => {
 		expect(loaded.frontmatter.progress.completed_phases).toBe(1);
 	});
 
+	it("updates array fields", async () => {
+		const pi = mockPi();
+		registerStateTools(pi as any);
+		const updated = await pi.call(
+			"gsd_state_update",
+			{ repoPath, field: "completed_phases", value: ["03", "04"] },
+			repoPath,
+		);
+		expect(updated.field).toBe("completed_phases");
+		expect(updated.value).toEqual(["03", "04"]);
+
+		const loaded = await pi.call("gsd_state_load", { repoPath }, repoPath);
+		expect(loaded.frontmatter.completed_phases).toEqual(["03", "04"]);
+	});
+
 	it("recalculates progress automatically on complete-plan", async () => {
 		const pi = mockPi();
 		registerStateTools(pi as any);

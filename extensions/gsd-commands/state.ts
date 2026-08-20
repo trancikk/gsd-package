@@ -1,5 +1,5 @@
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
 import * as registry from "./registry";
 import { resolveAbsolutePath } from "./utils";
@@ -67,7 +67,7 @@ function calculateProgress(repoPath: string): {
 	};
 }
 
-function refreshProgress(repoPath: string, frontmatter: Record<string, any>, body: string): void {
+function refreshProgress(repoPath: string, frontmatter: Record<string, any>): void {
 	frontmatter.progress = calculateProgress(repoPath);
 }
 
@@ -100,9 +100,18 @@ export function registerStateTools(pi: ExtensionAPI) {
 			field: Type.String({
 				description: "Dot-notation path, e.g. 'active_phase' or 'progress.completed_plans'",
 			}),
-			value: Type.Union([Type.String(), Type.Number(), Type.Boolean(), Type.Null()], {
-				description: "New scalar value",
-			}),
+			value: Type.Union(
+				[
+					Type.String(),
+					Type.Number(),
+					Type.Boolean(),
+					Type.Null(),
+					Type.Array(Type.Any(), { description: "Array value for fields like completed_phases or next_phases" }),
+				],
+				{
+					description: "New scalar or array value",
+				},
+			),
 		}),
 		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
@@ -204,7 +213,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 
 			// Keep progress counters in sync with the canonical filesystem state.
 			if (params.operation === "complete-phase" || params.operation === "complete-plan") {
-				refreshProgress(repoPath, frontmatter, body);
+				refreshProgress(repoPath, frontmatter);
 			}
 
 			frontmatter.last_activity = formatDate();

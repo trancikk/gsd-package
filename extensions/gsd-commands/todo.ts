@@ -1,10 +1,10 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
-import { parseFrontmatter, stringifyFrontmatter } from "./yaml";
 import { resolveAbsolutePath, writeAtomic } from "./utils";
+import { parseFrontmatter, stringifyFrontmatter } from "./yaml";
 
 const STATES = ["pending", "in_progress", "blocked", "completed", "failed", "skipped"] as const;
 type State = (typeof STATES)[number];
@@ -200,7 +200,7 @@ Execution state for the linked plan. Tasks are moved between sections by the \`g
 			}
 		}
 	}
-	return out.trimEnd() + "\n";
+	return `${out.trimEnd()}\n`;
 }
 
 function extractPlanTasks(planPath: string): Array<{ taskId: string; title: string }> {
@@ -240,7 +240,7 @@ function isTerminal(state: State): boolean {
 	return state === "completed" || state === "failed" || state === "skipped";
 }
 
-function buildToolResultText(payload: any): AgentToolResult<any> {
+function buildToolResultText<T>(payload: T): AgentToolResult<T> {
 	return {
 		content: [
 			{
@@ -284,8 +284,7 @@ export function registerTodoTools(pi: ExtensionAPI) {
 				Type.Array(Type.String(), { description: "Task IDs this task depends on (for update)" }),
 			),
 		}),
-		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
-			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<unknown>> {
 			const planPath = resolveAbsolutePath(params.planPath, ctx.cwd);
 			const todosPath = todosPathFromPlan(planPath);
 
@@ -297,7 +296,8 @@ export function registerTodoTools(pi: ExtensionAPI) {
 				if (fs.existsSync(planPath)) {
 					const { frontmatter } = parseFrontmatter(fs.readFileSync(planPath, "utf8"));
 					if (frontmatter.phase) phase = String(frontmatter.phase);
-					if (frontmatter.plan) plan = `${String(frontmatter.phase).padStart(2, "0")}-${String(frontmatter.plan).padStart(2, "0")}`;
+					if (frontmatter.plan)
+						plan = `${String(frontmatter.phase).padStart(2, "0")}-${String(frontmatter.plan).padStart(2, "0")}`;
 				}
 				const tasks: TodoTask[] = planTasks.map((t) => ({
 					taskId: t.taskId,

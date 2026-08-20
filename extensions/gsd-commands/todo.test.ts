@@ -1,6 +1,8 @@
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import type { AgentToolResult } from "@earendil-works/pi-agent-core";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { registerTodoTools } from "./todo";
 
@@ -8,19 +10,41 @@ function createTempRepo(): string {
 	return fs.mkdtempSync(path.join(os.tmpdir(), "gsd-todo-test-"));
 }
 
-function mockPi() {
-	const tools: Array<{ name: string; execute: Function }> = [];
+interface MockTool {
+	name: string;
+	execute: (
+		id: string,
+		params: unknown,
+		signal: AbortSignal | undefined,
+		onUpdate: unknown,
+		ctx: ExtensionContext,
+	) => Promise<AgentToolResult<unknown>>;
+}
+
+interface MockPi extends ExtensionAPI {
+	call: (name: string, params: Record<string, unknown>, repoPath: string) => Promise<any>;
+}
+
+type ToolResult = { ok: boolean; [key: string]: unknown };
+
+function mockPi(): MockPi {
+	const tools: MockTool[] = [];
 	return {
-		registerTool(def: any) {
+		registerTool(def: MockTool) {
 			tools.push({ name: def.name, execute: def.execute });
 		},
-		async call(name: string, params: any, repoPath: string) {
+		async call(name: string, params: Record<string, unknown>, repoPath: string): Promise<ToolResult> {
 			const tool = tools.find((t) => t.name === name);
 			if (!tool) throw new Error(`Tool not found: ${name}`);
-			const result = await tool.execute("test-id", params, undefined as any, undefined as any, { cwd: repoPath });
-			return JSON.parse((result as any).content[0].text);
+			const result = await tool.execute("test-id", params, undefined, undefined, { cwd: repoPath } as ExtensionContext);
+			return JSON.parse((result.content[0] as { text: string }).text) as ToolResult;
 		},
-	};
+	} as unknown as MockPi;
+}
+
+function expectOk(result: ToolResult): ToolResult {
+	expect(result.ok).toBe(true);
+	return result;
 }
 
 const samplePlan = `---

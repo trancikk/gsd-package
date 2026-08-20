@@ -30,6 +30,7 @@ All GSD artifacts live under `.planning/`.
         ├── <NN>-UI-SPEC.md             # UI design contract
         ├── <NN>-RETROSPECTIVE.md       # Post-phase retrospective
         ├── <NN>-<PP>-PLAN.md           # Executable plan
+        ├── <NN>-<PP>-TODOS.md          # FSM-tracked task execution state
         ├── <NN>-<PP>-SUMMARY.md        # Execution record
         ├── <NN>-VERIFICATION.md        # Verification report
         └── .continue-here.md           # Resume instructions
@@ -40,4 +41,5 @@ All GSD artifacts live under `.planning/`.
 1. `STATE.md` — always read first.
 2. `CONTEXT.md` for the active phase — locked decisions.
 3. `PLAN.md` for the current plan — what to implement.
-4. `RESEARCH.md` and `REQUIREMENTS.md` — supporting context.
+4. `TODOS.md` for the current plan — execution trace.
+5. `RESEARCH.md` and `REQUIREMENTS.md` — supporting context.

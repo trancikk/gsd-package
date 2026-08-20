@@ -34,6 +34,7 @@ All GSD artifacts live under `.planning/`:
         ├── <NN>-RESEARCH.md           # Research findings
         ├── <NN>-VALIDATION.md         # Plan-checker validation (optional)
         ├── <NN>-<PP>-PLAN.md          # Executable plan(s)
+        ├── <NN>-<PP>-TODOS.md         # FSM-tracked task execution state
         ├── <NN>-<PP>-SUMMARY.md       # Execution record(s)
         └── <NN>-VERIFICATION.md       # Phase verification report
 ```
@@ -96,10 +97,11 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
 ## Workflow Rules
 
 1. **Read `STATE.md` first** every session.
-2. **Registry files are mutated only through dedicated host-side tools.** Never use the `write` tool or direct file edits on `.planning/STATE.md`, `.planning/BACKLOG.md`, or `.planning/WORKSTREAMS.md`.
+2. **Registry files are mutated only through dedicated host-side tools.** Never use the `write` tool or direct file edits on `.planning/STATE.md`, `.planning/BACKLOG.md`, `.planning/WORKSTREAMS.md`, or any `.planning/phases/<NN>-<slug>/<NN>-<PP>-TODOS.md`.
    - State transitions: `gsd_state_load`, `gsd_state_update`, `gsd_state_advance`, `gsd_state_progress`, `gsd_next_action`
    - Backlog: `gsd_backlog`
    - Workstreams: `gsd_workstream`
+   - Todo lists: `gsd_todo`
    - `gsd_state_advance` automatically recalculates `progress` when completing a phase or plan.
    - If progress still looks stale, call `gsd_state_progress` — do not edit `STATE.md` directly.
    - See the GSD tool matrix in `skills/gsd-phase-loop/references/tool-matrix.md` for input/output details.
