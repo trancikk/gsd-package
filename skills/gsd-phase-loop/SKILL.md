@@ -85,6 +85,16 @@ Run each wave in parallel with `runs.all([...])`; never run dependent plans in p
 3. Never dump the full orchestrator conversation into a subagent.
 4. Read `STATE.md` first; update it after significant actions.
 
+## Showing next actions to the user
+
+After any orchestrator-level state change, use `gsd_next_action({ repoPath })` to show the user the deterministic FSM output:
+
+```javascript
+gsd_next_action({ repoPath: "." })
+```
+
+Display `recommended_action`, `valid_actions`, and any `missing_prerequisites`. This keeps the user informed without mutating `STATE.md`.
+
 ## Commit conventions
 
 Follow Conventional Commits: `<type>(<scope>): <subject>`.

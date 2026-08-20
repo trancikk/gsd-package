@@ -53,6 +53,16 @@ Always use the `gsd_backlog` tool to mutate `BACKLOG.md`. Never use the `write` 
 
 After calling `gsd_backlog`, confirm the operation succeeded by reading the returned `path`, `operation`, and `item`. Use `gsd_backlog` with `operation: list` if you need to inspect the current state.
 
+## Show next actions
+
+If a backlog item was promoted to a phase or workstream, or if the session is otherwise transitioning, call:
+
+```javascript
+gsd_next_action({ repoPath: "." })
+```
+
+Show the user the `recommended_action` and `valid_actions`.
+
 ## Done when
 
 - All user-selected actions are applied.

@@ -75,8 +75,21 @@ Include:
 - Terms/glossary updates
 - Link to any created ADR
 
+## Show next actions
+
+After `CONTEXT.md` is written, show the user what they can do next without editing `STATE.md`:
+
+```javascript
+gsd_next_action({ repoPath: "." })
+```
+
+Present `recommended_action` and `valid_actions` to the user, e.g.:
+
+> CONTEXT.md is ready. Recommended next step: **plan-phase**. Valid options: `plan-phase`, `plan-check`.
+
 ## Done when
 
 - All selected gray areas are resolved.
 - `CONTEXT.md` is written and non-empty.
+- User has seen the recommended next action from `gsd_next_action`.
 - User confirms the captured decisions are clear enough for planning.

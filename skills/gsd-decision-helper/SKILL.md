@@ -8,9 +8,28 @@ updated: "2026-08-19"
 
 # GSD Decision Helper
 
-Use this skill when you are unsure what to do next. Read `.planning/STATE.md` first, then look up the current `status` below.
+Use this skill when you are unsure what to do next or when returning from another workflow.
 
-## Fast lookup
+## 1. Load dynamic next actions
+
+Call the deterministic FSM tool to get the current valid and recommended actions:
+
+```javascript
+gsd_next_action({ repoPath: "." })
+```
+
+Present the result to the user without editing `STATE.md`:
+
+```
+Current state: [status] — [reason]
+Recommended next step: [recommended_action]
+Valid options: [valid_actions]
+Missing prerequisites: [missing_prerequisites]
+```
+
+If `missing_prerequisites` is non-empty, list them and ask the user how to proceed.
+
+## 2. Fast lookup (reference table)
 
 | `status` | `next_action` | What to do now | Which agent / tool |
 | ---------- | --------------- | ---------------- | -------------------- |

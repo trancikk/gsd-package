@@ -51,8 +51,19 @@ Always use dedicated tools for registry mutations. Never use the `write` tool or
 - **Switch active workstream or branch:** use `gsd_workstream` with `operation: switch`.
 - **Update `STATE.md` active_workstream:** `gsd_workstream` updates this automatically on `add` and `switch`. For other state changes, use `gsd_state_update` / `gsd_state_advance`.
 
+## Show next actions
+
+After the workstream operation is complete, call:
+
+```javascript
+gsd_next_action({ repoPath: "." })
+```
+
+Show the user the `recommended_action` and `valid_actions` so they know whether to continue planning, switch workstreams, or resume execution.
+
 ## Done when
 
 - The requested workstream operation is complete.
 - Registry files are consistent.
+- User has seen the recommended next action from `gsd_next_action`.
 - User confirms the active workstream state.
