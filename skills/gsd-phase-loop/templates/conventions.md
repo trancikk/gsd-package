@@ -5,7 +5,7 @@ This project uses the **GSD (Git. Ship. Done.)** phase-loop workflow. These conv
 ## GSD Terminology
 
 | Term | Meaning | Analogous to (do not use) |
-|------|---------|---------------------------|
+| ------ | --------- | --------------------------- |
 | **Milestone** | A shippable body of work composed of phases | epic, release |
 | **Phase** | A single discussion→plan→execute→verify→ship cycle | story, sprint |
 | **Plan** | An executable document (`<NN>-<PP>-PLAN.md`) with 2–3 tasks | sub-task, ticket |
@@ -76,6 +76,7 @@ must_haves:
 ```
 
 Tasks use these fields:
+
 - **Type:** `auto` or `checkpoint:human-verify`
 - **Files:** exact files to read before acting
 - **Read first:** what to look for in those files
@@ -95,13 +96,17 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
 ## Workflow Rules
 
 1. **Read `STATE.md` first** every session.
-2. **Use state tools for orchestrator-level STATE.md updates**: `gsd_state_update`, `gsd_state_advance`, `gsd_state_progress`. Avoid rewriting the whole file for small changes.
+2. **Registry files are mutated only through dedicated host-side tools.** Never use the `write` tool or direct file edits on `.planning/STATE.md`, `.planning/BACKLOG.md`, or `.planning/WORKSTREAMS.md`.
+   - State transitions: `gsd_state_load`, `gsd_state_update`, `gsd_state_advance`, `gsd_state_progress`, `gsd_next_action`
+   - Backlog: `gsd_backlog`
+   - Workstreams: `gsd_workstream`
+   - See the GSD tool matrix in `skills/gsd-phase-loop/references/tool-matrix.md` for input/output details.
 3. **Honor locked decisions** (`D-<NN>-MM` in `CONTEXT.md`) exactly; never silently override them.
-3. **Deferred ideas** never appear in plans.
-4. **Wave order is fixed:** do not run a plan before its `depends_on` plans are complete.
-5. **Every plan must map to at least one `REQ-XX`.**
-6. **Plans are prompts, not documents that become prompts** — write actionable tasks, not descriptions.
-7. **Verification is adversarial:** `gsd-verifier` checks actual code against `must_haves`, not claims.
+4. **Deferred ideas** never appear in plans. Capture them in `BACKLOG.md` via `gsd_backlog`.
+5. **Wave order is fixed:** do not run a plan before its `depends_on` plans are complete.
+6. **Every plan must map to at least one `REQ-XX`.**
+7. **Plans are prompts, not documents that become prompts** — write actionable tasks, not descriptions.
+8. **Verification is adversarial:** `gsd-verifier` checks actual code against `must_haves`, not claims.
 
 ## Research & Planning Flow
 

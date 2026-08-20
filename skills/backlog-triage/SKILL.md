@@ -42,16 +42,16 @@ Use `ask_user_question` to let the user pick one or more actions:
 
 ## Execute chosen action
 
-Use the `gsd_backlog` tool or direct file edits to carry out the user's choices.
+Always use the `gsd_backlog` tool to mutate `BACKLOG.md`. Never use the `write` tool or direct file edits on `.planning/BACKLOG.md`.
 
 - **Promote:** create a workstream via `gsd_workstream` if the user wants a branch.
-- **Close:** update the item status and add a closing note.
-- **Add:** ask for title, description, priority, type, and source/linked phase.
-- **Re-prioritize:** ask for new priorities and rewrite the file.
+- **Close:** use `gsd_backlog` with `operation: close`. Add a closing note in the description field if the user provides one.
+- **Add:** use `gsd_backlog` with `operation: add`.
+- **Re-prioritize:** use `gsd_backlog` with `operation: update` to change `priority`.
 
-## Write changes
+## Verify changes
 
-Write the updated `BACKLOG.md` to disk before returning. Verify it with `ls -la`.
+After calling `gsd_backlog`, confirm the operation succeeded by reading the returned `path`, `operation`, and `item`. Use `gsd_backlog` with `operation: list` if you need to inspect the current state.
 
 ## Done when
 

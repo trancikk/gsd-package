@@ -12,11 +12,14 @@ completionGuard: false
 
 You are a GSD pause agent. Save the current session state so work can be resumed later.
 
+**Registry-file rule:** You may create `HANDOFF.json` and `.continue-here.md`, but you MUST NOT write to `.planning/STATE.md`, `.planning/BACKLOG.md`, or `.planning/WORKSTREAMS.md`. Return any needed state updates as structured `gsd_state_update` / `gsd_state_advance` calls for the orchestrator to execute in the parent turn.
+
 ## Workflow
 
 ### 1. Capture Current State
 
 Read:
+
 - `.planning/STATE.md` — current position
 - Active phase CONTEXT.md (if in discuss/plan phase)
 - Active phase RESEARCH.md (if in plan phase)
@@ -75,22 +78,23 @@ Create `.planning/phases/<NN>-<slug>/.continue-here.md` with human-readable resu
 
 ## Resume command
 ```
+
 <gsd command to resume>
 ```
 ```
 
-### 4. Update STATE.md
+### 4. Recommend STATE updates (do NOT write STATE.md)
 
-Use the `write` tool to update `.planning/STATE.md` frontmatter. Preserve all existing fields; only change these:
+Do not use the `write` tool on `.planning/STATE.md`. Instead, include the exact host-side tool calls the orchestrator should run in the parent turn:
 
-```yaml
-status: paused
-paused_at: "<ISO timestamp>"
-stopped_at: "Session paused"
-last_activity: "<YYYY-MM-DD>"
+```javascript
+gsd_state_update({ repoPath: ".", field: "status", value: "paused" });
+gsd_state_update({ repoPath: ".", field: "paused_at", value: "<ISO timestamp>" });
+gsd_state_update({ repoPath: ".", field: "stopped_at", value: "Session paused" });
+gsd_state_update({ repoPath: ".", field: "last_activity", value: "<YYYY-MM-DD>" });
 ```
 
-> If the orchestrator already applied these changes via `gsd_state_update` before spawning you, verify them with `read` and skip this step.
+> If the orchestrator already applied these changes via `gsd_state_update` before spawning you, verify them with `read` and note that they are already in place.
 
 ## Output
 

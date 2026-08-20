@@ -45,7 +45,11 @@ When creating a workstream:
 
 ## Write changes
 
-Ensure `.planning/WORKSTREAMS.md` and `.planning/STATE.md` reflect the action. Use the `gsd_workstream` tool for deterministic registry updates when possible.
+Always use dedicated tools for registry mutations. Never use the `write` tool or direct file edits on `.planning/WORKSTREAMS.md` or `.planning/STATE.md`.
+
+- **Create/update workstreams:** use `gsd_workstream`.
+- **Switch active workstream or branch:** use `gsd_workstream` with `operation: switch`.
+- **Update `STATE.md` active_workstream:** `gsd_workstream` updates this automatically on `add` and `switch`. For other state changes, use `gsd_state_update` / `gsd_state_advance`.
 
 ## Done when
 
