@@ -21,6 +21,7 @@ import { Type } from "typebox";
 import { registerBacklogTools } from "./backlog";
 import { registerNextActionTool } from "./next-action";
 import { registerStateTools } from "./state";
+import { registerTodoTools } from "./todo";
 import { buildCrossPlatformGate, ensureOutputDir, resolveAbsolutePath } from "./utils";
 import { registerWorkstreamTools } from "./workstream";
 
@@ -346,5 +347,6 @@ export default function (pi: ExtensionAPI) {
 	registerStateTools(pi);
 	registerBacklogTools(pi);
 	registerWorkstreamTools(pi);
+	registerTodoTools(pi);
 	registerNextActionTool(pi);
 }
