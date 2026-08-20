@@ -43,33 +43,54 @@ Parse: frontmatter (phase, plan, type, wave, depends_on), objective, context, ta
 
 **If plan references CONTEXT.md:** Honor user's locked decisions throughout execution.
 
-### Step 2: Execute Tasks
+### Step 2: Initialize TODOS.md
 
-For each task in order:
+Before executing tasks, initialize the plan's todo list:
+
+1. Call `gsd_todo({ operation: "init", repoPath, planPath })` to create the matching TODOS.md from the PLAN.md.
+2. If TODOS.md already exists, call `gsd_todo({ operation: "list", repoPath, planPath })` to verify it and resume from the current state.
+3. Do NOT create or edit TODOS.md with the `write` tool or direct file edits; use `gsd_todo` only.
+
+### Step 3: Execute Tasks
+
+For each task in order, using `gsd_todo` to track execution state:
 
 0. **Precondition check:** If the task has a precondition, verify it first with read-only checks. If unmet, STOP and report.
 
-1. **Determine task type.** Look for `**Type:**` in the task. Default to `auto` if absent.
+1. **Transition to in_progress.** Before acting, call `gsd_todo({ operation: "transition", repoPath, planPath, taskId: "task-N", from: "pending", to: "in_progress" })` so the execution trace reflects the current task.
 
-2. **If `type="auto"`:**
+2. **Determine task type.** Look for `**Type:**` in the task. Default to `auto` if absent.
+
+3. **If `type="auto"`:**
    - Read the files listed in `**Files:**` first (fallback to `**Read first:**` if Files is absent)
    - Execute the `**Action:**` — make minimal, correct edits
    - Run the `**Verify:**` command
    - Confirm `**Acceptance criteria:**` are met
    - Commit immediately (see commit protocol)
 
-3. **If `type="prototype"`:**
+4. **If `type="prototype"`:**
    - Read the files listed in `**Files:**` first
    - Build the throwaway prototype (logic HTML demo or UI route variants) per the action
    - Do not merge the prototype into main; commit to a throwaway branch or save under `.planning/prototypes/`
    - Record the verdict and next step in `**Verify:**`
    - Note the prototype location in SUMMARY.md
 
-4. **If `type="checkpoint:human-verify"`:**
+5. **If `type="checkpoint:human-verify"`:**
    - STOP immediately — return structured checkpoint message
    - A fresh agent will be spawned to continue
 
-5. **After all tasks:** run overall verification, confirm success criteria
+6. **After all tasks:** run overall verification, confirm success criteria
+
+### Task State Transitions
+
+After each task, update TODOS.md via `gsd_todo`:
+
+- **Success:** `gsd_todo({ operation: "transition", repoPath, planPath, taskId: "task-N", from: "in_progress", to: "completed" })`
+- **Blocker:** `gsd_todo({ operation: "transition", repoPath, planPath, taskId: "task-N", from: "in_progress", to: "blocked", reason: "..." })` and escalate via `contact_supervisor({ reason: "need_decision", message: "..." })`
+- **Unrecoverable failure:** `gsd_todo({ operation: "transition", repoPath, planPath, taskId: "task-N", from: "in_progress", to: "failed", reason: "..." })`
+- **Scope decision to skip:** `gsd_todo({ operation: "transition", repoPath, planPath, taskId: "task-N", from: "in_progress", to: "skipped", reason: "..." })`
+
+Never write TODOS.md directly; `gsd_todo` is the only mutation path.
 
 ### Deviation Rules
 
