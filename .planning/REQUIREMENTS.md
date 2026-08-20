@@ -101,3 +101,16 @@
   - Each skill variant cross-links to the others.
 - **Phase:** 3
 - **Status:** ☑ Done
+
+## REQ-11: Agent todo-list FSM
+
+- **Description:** Provide a per-plan, state-machine-tracked todo list so agents (especially the executor) can report granular task progress, recover from interruptions, and surface blockers without editing planning files directly.
+- **Acceptance criteria:**
+  - Each `PLAN.md` can be initialized into a matching `TODOS.md` artifact with one entry per task.
+  - `TODOS.md` supports states: `pending`, `in_progress`, `blocked`, `completed`, `failed`, `skipped`.
+  - A host-side `gsd_todo` tool enforces valid transitions and atomic writes.
+  - The executor updates `TODOS.md` via `gsd_todo` as it works and still produces `SUMMARY.md`.
+  - The verifier cross-checks `TODOS.md` against `PLAN.md` tasks and flags incomplete/missing entries.
+  - Invalid transitions are rejected with a clear error; `from` must match current state.
+- **Phase:** 4
+- **Status:** ☐ Open

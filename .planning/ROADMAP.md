@@ -44,5 +44,20 @@
 - **Estimated scope:** Large
 - **Status:** Completed
 
+### Phase 4: Agent Todo FSM
+
+- **Goal:** Give the executor (and other agents) a per-plan, state-machine-tracked todo list for granular progress, recovery, and blocker visibility.
+- **Requirements:** REQ-11
+- **Success criteria:**
+  - `PLAN.md` → `TODOS.md` initialization works via a tool or deterministic step.
+  - `TODOS.md` supports `pending`, `in_progress`, `blocked`, `completed`, `failed`, `skipped` states with enforced transitions.
+  - `gsd_todo` tool rejects invalid transitions and stale `from` values.
+  - The executor updates todos as it executes tasks and still writes `SUMMARY.md`.
+  - The verifier checks that every PLAN task has a corresponding completed todo entry.
+  - Tests cover initialization, valid transitions, invalid transitions, and verifier integration.
+- **Depends on:** Phase 3
+- **Estimated scope:** Medium
+- **Status:** Active
+
 ---
-*Last updated: 2026-08-19*
+*Last updated: 2026-08-20*
