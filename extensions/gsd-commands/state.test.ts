@@ -163,4 +163,44 @@ describe("state tools", () => {
 		expect(phaseDone.frontmatter.status).toBe("idle");
 		expect(phaseDone.frontmatter.completed_phases).toEqual(["01"]);
 	});
+
+	it("recalculates progress automatically on complete-phase", async () => {
+		const pi = mockPi();
+		registerStateTools(pi as any);
+		const phaseDir = path.join(repoPath, ".planning", "phases", "01-auth");
+		fs.mkdirSync(phaseDir, { recursive: true });
+		fs.writeFileSync(path.join(phaseDir, "01-01-PLAN.md"), "# plan", "utf8");
+		fs.writeFileSync(path.join(phaseDir, "01-01-SUMMARY.md"), "# summary", "utf8");
+		fs.writeFileSync(path.join(phaseDir, "01-auth-VERIFICATION.md"), "# verification", "utf8");
+
+		await pi.call("gsd_state_advance", { repoPath, operation: "begin-phase", phase: 1, phaseName: "Auth" }, repoPath);
+		const phaseDone = await pi.call("gsd_state_advance", { repoPath, operation: "complete-phase", phase: 1 }, repoPath);
+		expect(phaseDone.frontmatter.completed_phases).toEqual(["01"]);
+		expect(phaseDone.progress.total_phases).toBe(1);
+		expect(phaseDone.progress.completed_phases).toBe(1);
+		expect(phaseDone.progress.completed_plans).toBe(1);
+		expect(phaseDone.progress.percent).toBe(100);
+
+		const loaded = await pi.call("gsd_state_load", { repoPath }, repoPath);
+		expect(loaded.frontmatter.progress.completed_phases).toBe(1);
+	});
+
+	it("recalculates progress automatically on complete-plan", async () => {
+		const pi = mockPi();
+		registerStateTools(pi as any);
+		const phaseDir = path.join(repoPath, ".planning", "phases", "01-auth");
+		fs.mkdirSync(phaseDir, { recursive: true });
+		fs.writeFileSync(path.join(phaseDir, "01-01-PLAN.md"), "# plan", "utf8");
+		fs.writeFileSync(path.join(phaseDir, "01-01-SUMMARY.md"), "# summary", "utf8");
+
+		await pi.call("gsd_state_advance", { repoPath, operation: "begin-phase", phase: 1, phaseName: "Auth" }, repoPath);
+		const planDone = await pi.call(
+			"gsd_state_advance",
+			{ repoPath, operation: "complete-plan", phase: 1, plan: 1 },
+			repoPath,
+		);
+		expect(planDone.progress.total_phases).toBe(1);
+		expect(planDone.progress.completed_plans).toBe(1);
+		expect(planDone.progress.percent).toBe(100);
+	});
 });

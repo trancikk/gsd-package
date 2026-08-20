@@ -39,6 +39,38 @@ function buildToolResultText(payload: any): AgentToolResult<any> {
 	};
 }
 
+function calculateProgress(repoPath: string): {
+	total_phases: number;
+	completed_phases: number;
+	total_plans: number;
+	completed_plans: number;
+	percent: number;
+} {
+	const phases = registry.listPhases(repoPath);
+
+	let totalPlans = 0;
+	let completedPlans = 0;
+	let completedPhases = 0;
+
+	for (const phase of phases) {
+		totalPlans += phase.plans;
+		completedPlans += phase.summaries;
+		if (phase.hasVerification) completedPhases++;
+	}
+
+	return {
+		total_phases: phases.length,
+		completed_phases: completedPhases,
+		total_plans: totalPlans,
+		completed_plans: completedPlans,
+		percent: totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0,
+	};
+}
+
+function refreshProgress(repoPath: string, frontmatter: Record<string, any>, body: string): void {
+	frontmatter.progress = calculateProgress(repoPath);
+}
+
 export function registerStateTools(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_state_load",
@@ -91,7 +123,8 @@ export function registerStateTools(pi: ExtensionAPI) {
 	pi.registerTool({
 		name: "gsd_state_advance",
 		label: "GSD State Advance",
-		description: "Perform a common state transition: begin a phase, complete a plan, or complete a phase.",
+		description:
+			"Perform a common state transition: begin a phase, complete a plan, or complete a phase. Progress counters are recalculated automatically when completing a phase or plan.",
 		parameters: Type.Object({
 			repoPath: Type.String({
 				description: "Path to the repo (absolute or relative to session cwd)",
@@ -169,6 +202,11 @@ export function registerStateTools(pi: ExtensionAPI) {
 				frontmatter.stopped_at = `Phase ${phase} completed`;
 			}
 
+			// Keep progress counters in sync with the canonical filesystem state.
+			if (params.operation === "complete-phase" || params.operation === "complete-plan") {
+				refreshProgress(repoPath, frontmatter, body);
+			}
+
 			frontmatter.last_activity = formatDate();
 			saveState(repoPath, frontmatter, body);
 			return buildToolResultText({
@@ -177,6 +215,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 				operation: params.operation,
 				phase,
 				plan: params.plan == null ? undefined : padPhase(params.plan),
+				progress: frontmatter.progress,
 				frontmatter: {
 					active_phase: frontmatter.active_phase,
 					current_phase: frontmatter.current_phase,
@@ -203,25 +242,7 @@ export function registerStateTools(pi: ExtensionAPI) {
 		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
 			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
 			const { frontmatter, body } = loadState(repoPath);
-			const phases = registry.listPhases(repoPath);
-
-			let totalPlans = 0;
-			let completedPlans = 0;
-			let completedPhases = 0;
-
-			for (const phase of phases) {
-				totalPlans += phase.plans;
-				completedPlans += phase.summaries;
-				if (phase.hasVerification) completedPhases++;
-			}
-
-			const progress = {
-				total_phases: phases.length,
-				completed_phases: completedPhases,
-				total_plans: totalPlans,
-				completed_plans: completedPlans,
-				percent: totalPlans > 0 ? Math.round((completedPlans / totalPlans) * 100) : 0,
-			};
+			const progress = calculateProgress(repoPath);
 
 			frontmatter.progress = progress;
 			frontmatter.last_activity = formatDate();

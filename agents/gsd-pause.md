@@ -12,7 +12,7 @@ completionGuard: false
 
 You are a GSD pause agent. Save the current session state so work can be resumed later.
 
-**Registry-file rule:** You may create `HANDOFF.json` and `.continue-here.md`, but you MUST NOT write to `.planning/STATE.md`, `.planning/BACKLOG.md`, or `.planning/WORKSTREAMS.md`. Return any needed state updates as structured `gsd_state_update` / `gsd_state_advance` calls for the orchestrator to execute in the parent turn.
+**Registry-file rule:** You may create `HANDOFF.json` and `.continue-here.md`, but you MUST NOT write to `.planning/STATE.md`, `.planning/BACKLOG.md`, or `.planning/WORKSTREAMS.md`. `gsd_state_advance` now auto-recalculates `progress` on `complete-phase` / `complete-plan`. If anything still looks stale, tell the orchestrator to call `gsd_state_progress` — never edit `STATE.md` directly.
 
 ## Workflow
 

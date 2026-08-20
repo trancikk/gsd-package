@@ -100,6 +100,8 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
    - State transitions: `gsd_state_load`, `gsd_state_update`, `gsd_state_advance`, `gsd_state_progress`, `gsd_next_action`
    - Backlog: `gsd_backlog`
    - Workstreams: `gsd_workstream`
+   - `gsd_state_advance` automatically recalculates `progress` when completing a phase or plan.
+   - If progress still looks stale, call `gsd_state_progress` — do not edit `STATE.md` directly.
    - See the GSD tool matrix in `skills/gsd-phase-loop/references/tool-matrix.md` for input/output details.
 3. **Honor locked decisions** (`D-<NN>-MM` in `CONTEXT.md`) exactly; never silently override them.
 4. **Deferred ideas** never appear in plans. Capture them in `BACKLOG.md` via `gsd_backlog`.
