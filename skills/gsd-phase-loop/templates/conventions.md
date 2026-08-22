@@ -124,6 +124,41 @@ Discuss → Research → Plan → (optional Plan Check) → Execute → Verify �
 - **Execute:** produces `SUMMARY.md` per plan, with atomic commits
 - **Verify:** produces `VERIFICATION.md` with passed/gaps_found/human_needed verdict
 
+## Engineering Discipline
+
+These conventions apply to all code, tests, and commits in this project. Establish project-specific overrides below if any of these need to differ.
+
+### Code
+
+- **Follow existing patterns.** Do not introduce new patterns, abstractions, or dependencies without discussion and an explicit decision.
+- **Reuse shared code.** Prefer existing packages, modules, and utilities over duplicating logic.
+- **Keep changes minimal.** Write the smallest amount of code that solves the stated problem — nothing extra.
+- **Honor the language's strictness.** Avoid loose types (`any`, unchecked casts, implicit `unknown`) without an explicit justification and a documented override.
+
+### Planning Before Code
+
+- **Read relevant specs, design docs, and prior decisions before writing or editing code.**
+- **Capture planning decisions in the appropriate artifact** (`CONTEXT.md`, `PLAN.md`, `specs/`, ADRs) before generating implementation code.
+- **Honor locked decisions** (`D-<NN>-MM` in `CONTEXT.md`) exactly; never silently override them.
+
+### Commits
+
+- **Commit atomically per completed task or phase.** Each commit should represent one logical, complete step.
+- **Use Conventional Commits** (`feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `perf:`, `chore:`) with the phase/plan scope when applicable (e.g., `feat(01-01): add auth middleware`).
+- **Always commit before declaring work done.** Uncommitted work is at risk.
+- **Do not push to `origin`** unless the user explicitly approves it.
+
+### Tests and Gates
+
+- **Run tests after every change** and show evidence before declaring the work done.
+- **Never proceed on red gates.** If tests, lint, type-check, or other required checks fail, fix the failure or invoke a debugging workflow (`/skill:diagnose-bugs`, `/gsd-debug`) before continuing.
+- **Never dismiss reproducible gate failures** as pre-existing, out of scope, or "not mine" without fixing them or logging a deferred defect in `BACKLOG.md`.
+
+### Communication
+
+- **One clarifying question beats a wrong assumption baked into code.** When requirements are ambiguous, ask before implementing.
+- **Be concise when reporting to the user.** Summarize decisions, evidence, and next steps clearly.
+
 ## Project-Specific Overrides
 
 If a project-specific `AGENTS.md` or `SYSTEM.md` exists in the repo root, its directives take precedence over these conventions. Note any overrides below as they are established.

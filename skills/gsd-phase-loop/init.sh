@@ -54,16 +54,22 @@ cp "${TEMPLATES_DIR}/workstreams.md" .planning/WORKSTREAMS.md
 # Create config.json
 cp "${TEMPLATES_DIR}/config.json" .planning/config.json
 
+# Create root AGENTS.md from template
+sed -e "s/<TIMESTAMP>/${TIMESTAMP}/g" \
+    -e "s/<DATE>/${DATE}/g" \
+    "${TEMPLATES_DIR}/agents.md" >AGENTS.md
+
 echo ""
 echo "✓ .planning/ directory created"
 echo "✓ PROJECT.md, ROADMAP.md, REQUIREMENTS.md, STATE.md, CONVENTIONS.md, BACKLOG.md, WORKSTREAMS.md, config.json initialized"
+echo "✓ AGENTS.md initialized at project root"
 echo ""
 echo "Next steps:"
 echo "  1. Edit .planning/PROJECT.md with your project details"
 echo "  2. Edit .planning/REQUIREMENTS.md with numbered REQ-IDs"
 echo "  3. Edit .planning/ROADMAP.md with milestones and phases"
 echo "  4. Review and customize .planning/CONVENTIONS.md for this team"
-echo "  5. Edit .planning/STATE.md to set the first phase as active"
+echo "  5. Review AGENTS.md and add project-specific instructions if needed"
 echo "  6. Use .planning/BACKLOG.md to capture deferred ideas and todo items"
 echo "  7. Use .planning/WORKSTREAMS.md to manage parallel feature branches"
-echo "  8. Start the phase loop with: discuss-phase for Phase 1"
+echo "  8. Start the phase loop: /skill:discuss-phase 1"

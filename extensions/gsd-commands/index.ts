@@ -3,18 +3,23 @@
  *
  * Registers deterministic, parameter-typed tools for GSD workflows.
  *
- * Two families of tools live here:
+ * Three families of tools live here:
  *
- * 1. **Orchestration tools** (`gsd_onboard`, `gsd_research`, `gsd_plan`,
+ * 1. **Orchestration tools** (`gsd_onboard`, `gsd_research_project`, `gsd_research`, `gsd_plan`,
  *    `gsd_execute`, `gsd_verify`) — prepare the exact `subagent()` call for
  *    each GSD phase agent. They do not mutate files.
  *
- * 2. **State-management tools** (`gsd_state_load`, `gsd_state_update`,
+ * 2. **Scaffold tool** (`gsd_scaffold`) — runs `skills/gsd-phase-loop/init.sh` synchronously
+ *    to create the `.planning/` directory and root `AGENTS.md`.
+ *
+ * 3. **State-management tools** (`gsd_state_load`, `gsd_state_update`,
  *    `gsd_state_advance`, `gsd_state_progress`, `gsd_next_action`) — host-side file operations
  *    and read-only suggestions on `.planning/STATE.md`. They run directly in the extension and return
  *    JSON, avoiding the need for agents to drive a CLI.
  */
 
+import * as cp from "node:child_process";
+import * as path from "node:path";
 import type { AgentToolResult } from "@earendil-works/pi-agent-core";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Type } from "typebox";
@@ -24,6 +29,10 @@ import { registerStateTools } from "./state";
 import { registerTodoTools } from "./todo";
 import { buildCrossPlatformGate, ensureOutputDir, resolveAbsolutePath } from "./utils";
 import { registerWorkstreamTools } from "./workstream";
+
+function initScriptPath(): string {
+	return path.join(__dirname, "..", "..", "skills", "gsd-phase-loop", "init.sh");
+}
 
 interface ResolvedPaths {
 	repoPath: string;
@@ -340,6 +349,98 @@ export default function (pi: ExtensionAPI) {
 				"Verify the files exist with ls -la before returning.",
 			].join("\n");
 			const call = buildSubagentCall("gsd-arch-review", "architecture-review", task, outputPath);
+			return buildToolResult(call, outputPath, repoPath);
+		},
+	});
+
+	pi.registerTool({
+		name: "gsd_scaffold",
+		label: "GSD Scaffold",
+		description:
+			"Create the GSD .planning/ directory and root AGENTS.md in a project using skills/gsd-phase-loop/init.sh.",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description: "Path to the project root (absolute or relative to session cwd)",
+			}),
+			projectName: Type.Optional(
+				Type.String({
+					description: "Optional project name; defaults to the directory name",
+				}),
+			),
+		}),
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
+			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
+			ensureOutputDir(path.join(repoPath, ".planning"));
+			const script = initScriptPath();
+			const args = params.projectName ? [params.projectName] : [];
+			const result = cp.execFileSync("bash", [script, ...args], {
+				cwd: repoPath,
+				encoding: "utf8",
+				timeout: 30000,
+			});
+			const created = [
+				".planning/PROJECT.md",
+				".planning/ROADMAP.md",
+				".planning/REQUIREMENTS.md",
+				".planning/STATE.md",
+				".planning/CONVENTIONS.md",
+				".planning/BACKLOG.md",
+				".planning/WORKSTREAMS.md",
+				".planning/config.json",
+				"AGENTS.md",
+			];
+			return {
+				content: [
+					{
+						type: "text",
+						text: [
+							`Scaffold created in ${repoPath}`,
+							"",
+							"Created files:",
+							...created.map((p) => `- ${p}`),
+							"",
+							result,
+						].join("\n"),
+					},
+				],
+				details: { repoPath, created },
+			};
+		},
+	});
+
+	pi.registerTool({
+		name: "gsd_research_project",
+		label: "GSD Research Project",
+		description:
+			"Prepare the subagent call for gsd-phase-researcher to research a new project's domain and write .planning/research/RESEARCH.md.",
+		parameters: Type.Object({
+			repoPath: Type.String({
+				description: "Path to the repo (absolute or relative to session cwd)",
+			}),
+			scope: Type.Optional(
+				Type.String({
+					description: "Optional scope description for the research",
+				}),
+			),
+		}),
+		async execute(_id, params, _signal, _onUpdate, ctx): Promise<AgentToolResult<any>> {
+			const repoPath = resolveAbsolutePath(params.repoPath, ctx.cwd);
+			const outputPath = [repoPath, ".planning", "research", "RESEARCH.md"].join("/");
+			ensureOutputDir(outputPath);
+			const task = [
+				"Research this new project's domain and write RESEARCH.md.",
+				"",
+				`Repo: ${repoPath}`,
+				`Output (absolute path): ${outputPath}`,
+				`Scope: ${params.scope || "full domain"}`,
+				"",
+				"Use the codebase-design and GSD conventions. Cover: stack (recommended technologies), features (table stakes vs differentiators vs anti-features), architecture (major components and data flow), and pitfalls (common mistakes with prevention strategies).",
+				"Read the existing PROJECT.md if it exists; otherwise infer from the project name and scope.",
+				"Write the complete RESEARCH.md to the absolute output path using the write tool.",
+				"Create parent directories with bash (mkdir -p) if needed.",
+				"Verify the file exists with ls -la before returning.",
+			].join("\n");
+			const call = buildSubagentCall("gsd-phase-researcher", "research-project", task, outputPath);
 			return buildToolResult(call, outputPath, repoPath);
 		},
 	});

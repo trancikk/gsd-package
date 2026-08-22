@@ -35,6 +35,7 @@ Each phase produces a consistent set of artifacts under `.planning/`.
 | `.planning/BACKLOG.md` | Pending ideas and tech debt | All |
 | `.planning/WORKSTREAMS.md` | Parallel feature branches | All |
 | `.planning/CONVENTIONS.md` | Project workflow conventions | Init |
+| `AGENTS.md` | Project instruction file for agents | Init |
 | `.planning/phases/<NN>-<slug>/<NN>-CONTEXT.md` | Locked decisions | Discuss |
 | `.planning/phases/<NN>-<slug>/<NN>-RESEARCH.md` | Research findings | Plan |
 | `.planning/phases/<NN>-<slug>/<NN>-VALIDATION.md` | Optional plan validation | Plan |

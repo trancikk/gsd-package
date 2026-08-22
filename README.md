@@ -32,6 +32,16 @@ pi install -l /path/to/gsd-package
 
 ### New project
 
+**Interactive setup (recommended):**
+
+```text
+/skill:init-project
+```
+
+This asks upstream-style deep questions (what to build, core value, scope, constraints) and scaffolds `.planning/` plus a root `AGENTS.md`.
+
+**Silent shell setup:**
+
 ```bash
 # 1. Scaffold
 cd my-project
@@ -41,6 +51,7 @@ bash ~/.pi/agent/skills/gsd-phase-loop/init.sh
 #    - .planning/PROJECT.md
 #    - .planning/ROADMAP.md
 #    - .planning/REQUIREMENTS.md
+#    - AGENTS.md
 
 # 3. Start the phase loop
 #    In pi: "run phase 1"
@@ -48,32 +59,34 @@ bash ~/.pi/agent/skills/gsd-phase-loop/init.sh
 
 ### Existing project (onboarding)
 
-```bash
-# 1. In pi, say: "onboard this project"
-#    This spawns gsd-phase-researcher to map the codebase.
-
-# 2. Review the generated .planning/codebase/MAPPING.md
-#    Validate: overview, architecture, tech debt — fix anything wrong.
-
-# 3. pi generates PROJECT.md, ROADMAP.md, REQUIREMENTS.md, and CONVENTIONS.md from the map.
-#    Review and adjust the proposed milestones/phases and project conventions.
-
-# 4. Start the phase loop
-#    In pi: "run phase 1"
+```text
+/gsd-onboard C:/Sources/my-project C:/Sources/my-project/.planning/codebase/MAPPING.md
 ```
 
 The onboarding process:
 
-1. **Map** — `gsd-phase-researcher` analyzes the codebase (stack, architecture, conventions, entry points, tech debt) and writes `.planning/codebase/MAPPING.md`
-2. **Validate** — you review the map, correct inaccuracies, state your priorities
-3. **Generate** — pi derives `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, and `CONVENTIONS.md` from the validated map
-4. **Approve** — you review the proposed milestones/phases and conventions before work begins
+1. **Map** — `gsd-phase-researcher` analyzes the codebase and writes `.planning/codebase/MAPPING.md`.
+2. **Validate** — you review the map, correct inaccuracies, state your priorities.
+3. **Scaffold** — call `gsd_scaffold({ repoPath })` to create the `.planning/` directory and root `AGENTS.md` from templates.
+4. **Research** (optional) — call `gsd_research_project({ repoPath, scope })` to investigate the domain or target features.
+5. **Generate** — pi derives `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, and `CONVENTIONS.md` from the map and any research, then populates `AGENTS.md`.
+6. **Approve** — you review the proposed milestones/phases and conventions before work begins.
+
+```text
+# Example flow in pi:
+/gsd-onboard C:/Sources/my-project C:/Sources/my-project/.planning/codebase/MAPPING.md
+gsd_scaffold({ repoPath: "C:/Sources/my-project" })
+gsd_research_project({ repoPath: "C:/Sources/my-project", scope: "auth domain" })
+# pi then derives PROJECT.md, ROADMAP.md, REQUIREMENTS.md, CONVENTIONS.md, and AGENTS.md
+# from the map/research before you start phase 1.
+```
 
 ### Prompt commands
 
-GSD registers pi prompt templates (`/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`, `/gsd-security-audit`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Interactive workflows are parent-turn skills (e.g., `/skill:workstream-manage`). Use them instead of hand-rolling workflow scripts.
+GSD registers pi prompt templates (`/gsd-new-project`, `/gsd-onboard`, `/gsd-research`, `/gsd-plan`, `/gsd-execute`, `/gsd-verify`, `/gsd-security-audit`) that expand into the correct `subagent({ workflowScript: ... })` call with `output` + `gate`. Interactive workflows are parent-turn skills (e.g., `/skill:init-project`, `/skill:discuss-phase`, `/skill:workstream-manage`). Use them instead of hand-rolling workflow scripts.
 
 ```text
+/gsd-new-project my-project
 /gsd-onboard C:/Sources/my-project C:/Sources/my-project/.planning/codebase/MAPPING.md
 /gsd-research C:/Sources/my-project C:/Sources/my-project/.planning/phases/01-foo/01-RESEARCH.md
 /gsd-security-audit C:/Sources/my-project C:/Sources/my-project/.planning/phases/03-auth C:/Sources/my-project/.planning/phases/03-auth/03-SECURITY-AUDIT.md
@@ -89,11 +102,12 @@ For even more reliability, the `gsd-commands` extension registers typed tools th
 **Orchestration tools** (return a prepared `subagent()` call):
 
 - `gsd_onboard({ repoPath, outputPath })`
+- `gsd_research_project({ repoPath, scope? })`
 - `gsd_research({ repoPath, outputPath, scope? })`
 - `gsd_plan({ repoPath, inputFiles, outputPath })`
 - `gsd_execute({ repoPath, planPath, outputPath })`
 - `gsd_verify({ repoPath, phaseDir, outputPath })`
-- `gsd_security_audit({ repoPath, phaseDir, outputPath })`
+- `gsd_security_audit({ repoPath, phaseDir, outputPath })
 
 Each tool validates the inputs, resolves absolute paths, creates the output directory, and returns the exact `subagent({ workflowScript: ... })` call. The orchestrator agent then invokes it directly and waits for completion, removing hand-rolled workflow-script construction and copy-paste.
 
@@ -111,6 +125,10 @@ Each tool validates the inputs, resolves absolute paths, creates the output dire
 **Workstream tool** (host-side file operations on `.planning/WORKSTREAMS.md` + Git branch management):
 
 - `gsd_workstream({ repoPath, operation, ... })` — list / add / update / switch / pause / resume / merge / close parallel feature branches
+
+**Scaffold tool** (host-side file operation):
+
+- `gsd_scaffold({ repoPath, projectName? })` — runs `init.sh` to create `.planning/` + root `AGENTS.md`
 
 These run directly in the extension (not in a subagent), atomically rewrite the target file, and return JSON. They eliminate the formatting drift and missed-updates that come from asking agents to `write` the whole file.
 
@@ -335,7 +353,8 @@ This keeps the failure modes local: a mis-invoked tool fails one step, not the w
 | Commit validation | `gsd-hooks` extension (tool_call) |
 | Status display in footer | `gsd-hooks` extension (setStatus) — milestone, phase name/status, plan, workstream, progress |
 | `.planning/` artifact templates | 12 templates in `templates/` |
-| Project conventions artifact | `.planning/CONVENTIONS.md` generated by `init.sh`; read by all agents |
+| Project conventions artifact | `.planning/CONVENTIONS.md` generated by `init.sh` or `/skill:init-project`; read by all agents |
+| Project instruction file | `AGENTS.md` generated by `init.sh` or `/skill:init-project`; takes precedence over conventions when present |
 | Code review | `gsd-code-review` agent — plan compliance, requirement coverage, quality |
 | Prompt guard | `gsd-hooks` extension — scans `.planning/` writes for injected instructions |
 | Read-injection scanner | `gsd-hooks` extension — scans `read` tool output for injected instructions |
